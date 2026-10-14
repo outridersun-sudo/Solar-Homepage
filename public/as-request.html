@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>A/S 신청 | 천일테크윈</title>
+  <title>A/S 접수 요청 | 천일테크윈</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
 
+<body>
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="index.html">천일테크윈</a>
@@ -26,7 +26,7 @@
 <section class="page-hero">
   <div class="container">
     <div class="breadcrumb">HOME / A/S SUPPORT / REQUEST</div>
-    <h1>A/S 신청</h1>
+    <h1>A/S 접수 요청</h1>
     <p>제품 및 현장 정보를 입력해 주세요.</p>
   </div>
 </section>
@@ -34,9 +34,9 @@
 <section class="section">
   <div class="container">
     <div class="notice-box">
-      필수 항목을 입력하고 신청해 주세요.
-      정상적으로 저장되면 접수번호가 표시됩니다.
-      사진 및 자료 첨부 기능은 준비 중입니다.
+      제출한 요청은 검토 대기로 등록됩니다.
+      관리자가 확인하여 정식 접수하면 접수번호가 생성됩니다.
+      요청 제출만으로 정식 접수가 완료되는 것은 아닙니다.
     </div>
 
     <div style="height:22px"></div>
@@ -47,7 +47,7 @@
         style="text-align:left;margin-bottom:25px"
       >
         <div class="kicker">A/S REQUEST FORM</div>
-        <h2 style="font-size:28px">A/S 신청서</h2>
+        <h2 style="font-size:28px">A/S 접수 요청서</h2>
         <p>* 표시 항목은 필수입니다.</p>
       </div>
 
@@ -58,9 +58,7 @@
             id="customer_name"
             name="customer_name"
             class="form-control"
-            type="text"
             maxlength="150"
-            autocomplete="organization"
             required
             placeholder="회사명 또는 고객명"
           >
@@ -72,9 +70,7 @@
             id="contact_name"
             name="contact_name"
             class="form-control"
-            type="text"
             maxlength="100"
-            autocomplete="name"
             required
             placeholder="담당자명"
           >
@@ -88,7 +84,6 @@
             class="form-control"
             type="tel"
             maxlength="30"
-            autocomplete="tel"
             required
             placeholder="010-0000-0000"
           >
@@ -102,7 +97,6 @@
             class="form-control"
             type="email"
             maxlength="254"
-            autocomplete="email"
             placeholder="name@example.com"
           >
         </div>
@@ -113,7 +107,6 @@
             id="plant_name"
             name="plant_name"
             class="form-control"
-            type="text"
             maxlength="150"
             required
             placeholder="○○ 태양광발전소"
@@ -126,7 +119,6 @@
             id="installation_region"
             name="installation_region"
             class="form-control"
-            type="text"
             maxlength="150"
             placeholder="시/도, 시/군/구"
           >
@@ -153,7 +145,6 @@
             id="model_name"
             name="model_name"
             class="form-control"
-            type="text"
             maxlength="100"
             required
             placeholder="모델명"
@@ -166,7 +157,6 @@
             id="serial_number"
             name="serial_number"
             class="form-control"
-            type="text"
             maxlength="100"
             required
             placeholder="제품 시리얼번호"
@@ -179,7 +169,6 @@
             id="fault_code"
             name="fault_code"
             class="form-control"
-            type="text"
             maxlength="100"
             placeholder="표시된 오류코드가 있는 경우 입력"
           >
@@ -194,7 +183,7 @@
             maxlength="10000"
             rows="6"
             required
-            placeholder="발생 시점, 증상, 반복 여부 등을 구체적으로 입력해 주세요."
+            placeholder="발생 시점, 증상, 반복 여부 등을 입력해 주세요."
           ></textarea>
         </div>
 
@@ -206,26 +195,17 @@
             type="file"
             multiple
             disabled
-            aria-describedby="attachment-help"
           >
-          <div class="form-help" id="attachment-help">
-            사진 및 자료 첨부 기능은 준비 중입니다.
-            현재 신청에는 파일이 포함되지 않습니다.
+          <div class="form-help">
+            첨부 기능은 준비 중이며 현재 파일은 전송되지 않습니다.
           </div>
         </div>
 
         <div class="form-group full">
-          <div class="notice-box" id="privacy-notice">
-            <strong>개인정보 수집·이용 안내</strong>
-            <p>
-              현재는 로컬 개발 테스트 화면입니다.
-              실제 고객정보 대신 가상 정보를 입력해 주세요.
-            </p>
-            <p>
-              운영 전 수집 목적, 수집 항목, 보유·이용 기간,
-              동의 거부 권리와 거부 시 제한사항을 확정하여
-              이 안내를 교체해야 합니다.
-            </p>
+          <div class="notice-box">
+            현재는 개발 테스트 화면입니다.
+            실제 고객정보 대신 가상 정보를 입력해 주세요.
+            운영 전 개인정보 수집·이용 안내를 확정해야 합니다.
           </div>
 
           <label for="privacy_agreed">
@@ -234,35 +214,25 @@
               name="privacy_agreed"
               type="checkbox"
               required
-              aria-describedby="privacy-notice"
             >
             개인정보 수집 및 이용에 동의합니다. *
           </label>
         </div>
       </div>
 
-      <div
+      <p
         id="request-result"
         role="status"
         aria-live="polite"
-        aria-atomic="true"
-        style="margin-top:20px;white-space:pre-line"
-      ></div>
+        style="white-space:pre-line"
+      ></p>
 
       <div class="form-actions">
         <a class="btn btn-gray" href="as-service.html">취소</a>
-        <button
-          id="submit-button"
-          class="btn btn-blue"
-          type="submit"
-        >
-          A/S 신청
+        <button class="btn btn-blue" type="submit">
+          A/S 접수 요청
         </button>
       </div>
-
-      <noscript>
-        <p>접수하려면 브라우저의 JavaScript를 활성화해 주세요.</p>
-      </noscript>
     </form>
   </div>
 </section>
@@ -273,7 +243,6 @@
       <strong>천일테크윈</strong>
       <p>태양광 인버터 · 통신 RTU · 발전소 모니터링 솔루션</p>
     </div>
-
     <div>
       <p>인천광역시 제물포구 화도진로 127</p>
       <p>TEL 032-764-0671~3 · E-mail info@example.com</p>
@@ -283,98 +252,6 @@
 </footer>
 
 <script src="js/main.js"></script>
-
-<script>
-  const form = document.getElementById('as-request-form');
-  const button = document.getElementById('submit-button');
-  const resultBox = document.getElementById('request-result');
-
-  let submitting = false;
-  let submissionCompleted = false;
-  let submissionUncertain = false;
-
-  form.addEventListener('submit', async event => {
-    event.preventDefault();
-
-    if (submitting || submissionCompleted || submissionUncertain) {
-      return;
-    }
-
-    if (!form.reportValidity()) {
-      return;
-    }
-
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
-
-    data.privacy_agreed = formData.has('privacy_agreed');
-
-    submitting = true;
-    button.disabled = true;
-    button.textContent = '접수 중…';
-    form.setAttribute('aria-busy', 'true');
-    resultBox.textContent = '신청 내용을 전송하고 있습니다.';
-
-    try {
-      const response = await fetch('/api/as-requests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        if (response.status >= 500) {
-          throw new Error('서버 처리 결과 확인 필요');
-        }
-
-        resultBox.textContent =
-          result.message || '접수하지 못했습니다. 입력 내용을 확인해 주세요.';
-        return;
-      }
-
-      if (
-        typeof result.request_number !== 'string' ||
-        !/^AS-\d{6}-\d{4}$/.test(result.request_number)
-      ) {
-        throw new Error('접수번호 확인 실패');
-      }
-
-      submissionCompleted = true;
-
-      resultBox.textContent =
-        'A/S 신청이 접수되었습니다.\n' +
-        '접수번호: ' + result.request_number + '\n' +
-        '접수번호를 보관해 주세요.';
-
-      form.reset();
-    } catch (error) {
-      submissionUncertain = true;
-
-      resultBox.textContent =
-        '접수 결과를 확인하지 못했습니다.\n' +
-        '이미 저장되었을 수 있으므로 중복 신청하지 말고, ' +
-        '담당자 또는 로컬 DB에서 접수 내역을 확인해 주세요.';
-    } finally {
-      submitting = false;
-      form.removeAttribute('aria-busy');
-
-      if (submissionCompleted) {
-        button.disabled = true;
-        button.textContent = '접수 완료';
-      } else if (submissionUncertain) {
-        button.disabled = true;
-        button.textContent = '접수 확인 필요';
-      } else {
-        button.disabled = false;
-        button.textContent = 'A/S 신청';
-      }
-    }
-  });
-</script>
-
+<script src="js/as-request.js"></script>
 </body>
 </html>

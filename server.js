@@ -16,6 +16,7 @@ const pool = mariadb.createPool({
 });
 
 app.use(express.json({ limit: '100kb' }));
+require('./server/admin')(app, pool);
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.post('/api/as-requests', async (req, res) => {
@@ -76,93 +77,37 @@ app.post('/api/as-requests', async (req, res) => {
     return res.status(400).json({ message: '개인정보 수집·이용에 동의해 주세요.' });
   }
 
-    let conn;
-
+  let conn;
   try {
     conn = await pool.getConnection();
     await conn.beginTransaction();
-
-    // 접수 시점을 한국 시간으로 계산
-    const koreaNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
-    const date = koreaNow.toISOString().slice(0, 10);
-    const yymmdd = date.slice(2).replaceAll('-', '');
-
-    await conn.query(
-      `INSERT INTO as_request_sequences (request_date, last_number)
-       VALUES (?, 0)
-       ON DUPLICATE KEY UPDATE last_number = last_number`,
-      [date]
-    );
-
-    // 같은 날짜의 번호 생성은 순서대로 처리
-    const rows = await conn.query(
-      `SELECT last_number
-       FROM as_request_sequences
-       WHERE request_date = ?
-       FOR UPDATE`,
-      [date]
-    );
-
-    const nextNumber = Number(rows[0].last_number) + 1;
-
-    if (nextNumber > 9999) {
-      await conn.rollback();
-      return res.status(503).json({
-        message: '당일 접수 한도를 초과했습니다. 담당자에게 문의해 주세요.'
-      });
-    }
-
-    await conn.query(
-      `UPDATE as_request_sequences
-       SET last_number = ?
-       WHERE request_date = ?`,
-      [nextNumber, date]
-    );
-
-    const requestNumber =
-      `AS-${yymmdd}-${String(nextNumber).padStart(4, '0')}`;
-
-    await conn.query(
+    const result = await conn.query(
       `INSERT INTO as_requests (
-        request_number,
         customer_name, contact_name, phone, email,
         plant_name, installation_region, product_type,
         model_name, serial_number, fault_code, symptoms,
-        privacy_agreed_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-      [
-        requestNumber,
-        data.customer_name,
-        data.contact_name,
-        data.phone,
-        data.email || null,
-        data.plant_name,
-        data.installation_region || null,
-        data.product_type,
-        data.model_name,
-        data.serial_number,
-        data.fault_code || null,
-        data.symptoms
-      ]
+        privacy_agreed_at, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 'pending')`,
+      [data.customer_name, data.contact_name, data.phone, data.email || null,
+       data.plant_name, data.installation_region || null, data.product_type,
+       data.model_name, data.serial_number, data.fault_code || null, data.symptoms]
     );
-
+    await conn.query(
+      `INSERT INTO as_request_history (request_id, from_status, to_status, reason, actor)
+       VALUES (?, NULL, 'pending', '고객 접수 요청 제출', 'applicant')`,
+      [String(result.insertId)]
+    );
     await conn.commit();
-
-    res.status(201).json({ request_number: requestNumber });
+    res.status(201).json({
+      application_id: String(result.insertId),
+      message: '접수 요청이 제출되었습니다. 관리자 검토 후 정식 접수됩니다.'
+    });
   } catch (err) {
     if (conn) {
-      try {
-        await conn.rollback();
-      } catch (rollbackError) {
-        console.error('롤백 실패:', rollbackError.code);
-      }
+      try { await conn.rollback(); } catch (rollbackError) { console.error('롤백 실패:', rollbackError.code); }
     }
-
-    console.error('A/S 저장 실패:', err.code);
-
-    res.status(500).json({
-      message: '접수 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.'
-    });
+    console.error('신청 저장 실패:', err.code);
+    res.status(500).json({ message: '신청 저장에 실패했습니다.' });
   } finally {
     if (conn) conn.release();
   }

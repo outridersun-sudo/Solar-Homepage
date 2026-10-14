@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A/S 신청·접수 관리 | 천일테크윈</title>
+
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      background: #f3f6fa;
+      color: #172b43;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 24px;
+      background: white;
+      border-radius: 12px;
+    }
+
+    input, select, textarea, button {
+      box-sizing: border-box;
+      font: inherit;
+      padding: 10px;
+      margin: 5px;
+      border: 1px solid #bccbdc;
+      border-radius: 5px;
+    }
+
+    button {
+      cursor: pointer;
+      background: #1767a8;
+      color: white;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .login-field {
+      display: block;
+      margin: 12px 0;
+    }
+
+    .login-field input {
+      display: block;
+      width: min(100%, 350px);
+      margin-left: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    td, th {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+
+    #table-wrap {
+      overflow-x: auto;
+    }
+
+    dt {
+      font-weight: bold;
+      margin-top: 12px;
+    }
+
+    dd {
+      margin: 4px 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    #message {
+      white-space: pre-line;
+      color: #9a3100;
+    }
+
+    #reason {
+      display: block;
+      width: min(100%, 650px);
+    }
+
+    #history li {
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>A/S 신청·접수 관리</h1>
+    <a href="index.html">홈페이지로 이동</a>
+
+    <p id="message" role="status" aria-live="polite"></p>
+
+    <form id="login-form" onsubmit="event.preventDefault()">
+      <h2>관리자 로그인</h2>
+
+      <label class="login-field" for="username">
+        아이디
+        <input
+          id="username"
+          name="username"
+          autocomplete="username"
+          maxlength="100"
+          required
+        >
+      </label>
+
+      <label class="login-field" for="password">
+        비밀번호
+        <input
+          id="password"
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          maxlength="256"
+          required
+        >
+      </label>
+
+      <button type="submit">로그인</button>
+    </form>
+
+    <section id="management" hidden>
+      <h2>신청·접수 목록</h2>
+
+      <p>
+        검토 대기 요청을 확인한 후 정식 접수하거나
+        사유를 입력하여 신청 불가로 처리하세요.
+        신청 내역은 삭제하지 않습니다.
+      </p>
+
+      <button id="refresh" type="button">새로고침</button>
+      <button id="logout" type="button">로그아웃</button>
+
+      <div id="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>신청 / 정식 접수번호</th>
+              <th>고객명</th>
+              <th>모델</th>
+              <th>상태</th>
+              <th>신청일</th>
+              <th>상세</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+
+      <p>
+        <button id="previous" type="button">이전</button>
+        <span id="page-label"></span>
+        <button id="next" type="button">다음</button>
+      </p>
+
+      <section id="detail" hidden>
+        <h2>신청 상세</h2>
+        <dl id="detail-fields"></dl>
+
+        <h3>검토·처리 이력</h3>
+        <ul id="history"></ul>
+
+        <p id="no-action" hidden>
+          완료된 접수입니다. 변경 이력은 계속 보관됩니다.
+        </p>
+
+        <form id="status-form">
+          <label for="status">처리 선택</label>
+          <select id="status" required></select>
+
+          <p id="action-help"></p>
+
+          <label id="operator-label" for="operator-name">
+            처리자 이름 *
+          </label>
+          <input
+            id="operator-name"
+            type="text"
+            maxlength="100"
+            required
+            autocomplete="off"
+            placeholder="실제 담당자 이름"
+          >
+
+          <div id="reason-group">
+            <label for="reason">변경 사유 *</label>
+            <textarea
+              id="reason"
+              maxlength="1000"
+              rows="3"
+              required
+              placeholder="접수 사유 또는 신청 불가 사유"
+            ></textarea>
+          </div>
+
+          <div id="completion-group" hidden>
+            <label for="completed-at">실제 완료일시 — 한국 시간 *</label>
+            <input
+              id="completed-at"
+              type="datetime-local"
+              step="60"
+            >
+
+            <label for="completion-details">처리내용 *</label>
+            <textarea
+              id="completion-details"
+              maxlength="10000"
+              rows="5"
+              placeholder="점검 결과, 수리 내용, 교체 부품 등을 입력하세요."
+            ></textarea>
+          </div>
+
+          <button type="submit">검토 결과 저장</button>
+        </form>
+
+      </section>
+    </section>
+  </main>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>
