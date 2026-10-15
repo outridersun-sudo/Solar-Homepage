@@ -4,9 +4,6 @@ module.exports = function registerAdmin(app, pool) {
   const sessions = new Map();
   const sessionDuration = 2 * 60 * 60 * 1000;
 
-  let loginAttempts = 0;
-  let loginWindowEnds = 0;
-
   const cleanup = setInterval(() => {
     for (const [id, session] of sessions) {
       if (session.expires <= Date.now()) {
@@ -82,99 +79,91 @@ module.exports = function registerAdmin(app, pool) {
     next();
   });
 
-  app.post('/api/admin/login', async (req, res, next) => {
-    const savedUsername = process.env.ADMIN_USERNAME;
-    const savedPassword = process.env.ADMIN_PASSWORD_HASH;
+  // 로그인 경로는 한 번만 등록
+  app.post(
+    '/api/admin/login',
+    app.locals.security.loginLimit,
+    async (req, res, next) => {
+      const savedUsername = process.env.ADMIN_USERNAME;
+      const savedPassword = process.env.ADMIN_PASSWORD_HASH;
 
-    if (!savedUsername || !savedPassword) {
-      return res.status(503).json({
-        message: '.env의 관리자 계정 설정을 확인하세요.'
-      });
-    }
-
-    if (Date.now() >= loginWindowEnds) {
-      loginAttempts = 0;
-      loginWindowEnds = Date.now() + 10 * 60 * 1000;
-    }
-
-    if (loginAttempts >= 10) {
-      return res.status(429).json({
-        message: '로그인 시도가 많습니다. 10분 후 다시 시도하세요.'
-      });
-    }
-
-    loginAttempts++;
-
-    const { username, password } = req.body || {};
-
-    if (
-      typeof username !== 'string' ||
-      typeof password !== 'string' ||
-      password.length > 256
-    ) {
-      return res.status(401).json({
-        message: '아이디 또는 비밀번호를 확인하세요.'
-      });
-    }
-
-    const [salt, savedHash] = savedPassword.split(':');
-
-    if (
-      !/^[a-f0-9]{32}$/.test(salt || '') ||
-      !/^[a-f0-9]{128}$/.test(savedHash || '')
-    ) {
-      return res.status(503).json({
-        message: '관리자 비밀번호 해시 설정을 확인하세요.'
-      });
-    }
-
-    try {
-      const hash = await new Promise((resolve, reject) => {
-        crypto.scrypt(password, salt, 64, (err, value) => {
-          if (err) reject(err);
-          else resolve(value);
+      if (!savedUsername || !savedPassword) {
+        return res.status(503).json({
+          message: '.env의 관리자 계정 설정을 확인하세요.'
         });
-      });
+      }
 
-      const matches = crypto.timingSafeEqual(
-        hash,
-        Buffer.from(savedHash, 'hex')
-      );
+      const { username, password } = req.body || {};
 
-      if (!matches || username !== savedUsername) {
+      if (
+        typeof username !== 'string' ||
+        typeof password !== 'string' ||
+        password.length > 256
+      ) {
         return res.status(401).json({
           message: '아이디 또는 비밀번호를 확인하세요.'
         });
       }
 
-      const previous = getSession(req);
+      const [salt, savedHash] = savedPassword.split(':');
 
-      if (previous) {
-        sessions.delete(previous.id);
+      if (
+        !/^[a-f0-9]{32}$/.test(salt || '') ||
+        !/^[a-f0-9]{128}$/.test(savedHash || '')
+      ) {
+        return res.status(503).json({
+          message: '관리자 비밀번호 해시 설정을 확인하세요.'
+        });
       }
 
-      const id = crypto.randomBytes(32).toString('hex');
-      const csrf = crypto.randomBytes(32).toString('hex');
+      try {
+        const hash = await new Promise((resolve, reject) => {
+          crypto.scrypt(password, salt, 64, (err, value) => {
+            if (err) reject(err);
+            else resolve(value);
+          });
+        });
 
-      sessions.set(id, {
-        id,
-        csrf,
-        username,
-        expires: Date.now() + sessionDuration
-      });
+        const matches = crypto.timingSafeEqual(
+          hash,
+          Buffer.from(savedHash, 'hex')
+        );
 
-      res.setHeader(
-        'Set-Cookie',
-        makeCookie(req, id, sessionDuration / 1000)
-      );
+        if (!matches || username !== savedUsername) {
+          return res.status(401).json({
+            message: '아이디 또는 비밀번호를 확인하세요.'
+          });
+        }
 
-      res.json({ csrf });
-    } catch (err) {
-      next(err);
+        const previous = getSession(req);
+
+        if (previous) {
+          sessions.delete(previous.id);
+        }
+
+        const id = crypto.randomBytes(32).toString('hex');
+        const csrf = crypto.randomBytes(32).toString('hex');
+
+        sessions.set(id, {
+          id,
+          csrf,
+          username,
+          expires: Date.now() + sessionDuration
+        });
+
+        res.setHeader(
+          'Set-Cookie',
+          makeCookie(req, id, sessionDuration / 1000)
+        );
+
+        res.json({ csrf });
+      } catch (err) {
+        next(err);
+      }
     }
-  });
+  );
 
-  // 아래 관리자 기능은 모두 로그인 필요
+  // 아래 관리자 API는 로그인 필요
   app.use('/api/admin', (req, res, next) => {
     const session = getSession(req);
 
@@ -197,8 +186,11 @@ module.exports = function registerAdmin(app, pool) {
     next();
   });
 
+  // 각 관리자 화면이 같은 로그인 상태를 확인
   app.get('/api/admin/session', (req, res) => {
-    res.json({ csrf: req.adminSession.csrf });
+    res.json({
+      csrf: req.adminSession.csrf
+    });
   });
 
   app.post('/api/admin/logout', (req, res) => {
@@ -241,13 +233,14 @@ module.exports = function registerAdmin(app, pool) {
     }
   });
 
-  // 상세 조회·검토·승인 기능 연결
   require('./notices').registerAdmin(app, pool);
   require('./downloads').registerAdmin(app, pool);
   require('./attachments').registerAdmin(app, pool);
   require('./review')(app, pool);
 
   app.use('/api/admin', (err, req, res, next) => {
+    if (res.headersSent) return next(err);
+
     console.error('관리자 API 오류:', err.code || err.name);
 
     res.status(500).json({

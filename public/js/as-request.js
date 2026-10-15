@@ -13,6 +13,33 @@ const maxSize = 10 * 1024 * 1024;
 let locked = false;
 let processing = false;
 
+let submissionKey = '';
+
+function getSubmissionKey() {
+  if (submissionKey) return submissionKey;
+
+  try {
+    submissionKey =
+      sessionStorage.getItem('as-submission-id') || '';
+  } catch {}
+
+  const valid =
+    /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
+
+  if (!valid.test(submissionKey)) {
+    submissionKey = crypto.randomUUID();
+
+    try {
+      sessionStorage.setItem(
+        'as-submission-id',
+        submissionKey
+      );
+    } catch {}
+  }
+
+  return submissionKey;
+}
+
 // 화면 너비 대신 브라우저의 휴대폰 정보를 사용
 const isPhone =
   typeof navigator.userAgentData?.mobile === 'boolean'
@@ -291,6 +318,9 @@ form.addEventListener('submit', async event => {
   try {
     const response = await fetch('/api/as-requests', {
       method: 'POST',
+      headers: {
+        'X-Submission-Id': getSubmissionKey()
+      },
       body: data
     });
 
@@ -316,10 +346,18 @@ form.addEventListener('submit', async event => {
     }
 
     resultBox.textContent =
-      '접수 요청이 제출되었습니다.\n' +
-      '신청 관리번호: ' + result.application_id + '\n' +
-      '첨부파일: ' + count + '개\n' +
+      (result.duplicate
+        ? '이미 저장된 동일 요청입니다. 중복 등록하지 않았습니다.'
+        : '접수 요청이 제출되었습니다.') +
+      '\n신청 관리번호: ' + result.application_id +
+      '\n첨부파일: ' + count + '개\n' +
       '관리자 검토 후 정식 접수됩니다.';
+
+    try {
+      sessionStorage.removeItem('as-submission-id');
+    } catch {}
+
+    submissionKey = '';
 
     form.reset();
 

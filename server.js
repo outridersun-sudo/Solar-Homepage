@@ -16,6 +16,8 @@ const pool = mariadb.createPool({
   connectionLimit: 5
 });
 
+const security = require('./server/security')(app, pool);
+
 app.use(express.json({ limit: '100kb' }));
 
 require('./server/notices').registerPublic(app, pool);
@@ -26,6 +28,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.post(
   '/api/as-requests',
+  security.submissionLimit,
   attachments.receive,
   async (req, res) => {
     async function reject(message) {
@@ -117,8 +120,26 @@ app.post(
     let conn;
 
     try {
+      await security.phoneLimit(data.phone);
+
       conn = await pool.getConnection();
       await conn.beginTransaction();
+
+      const submission = await security.beginSubmission(
+        conn,
+        req,
+        data
+      );
+
+      if (submission.existingId) {
+        await conn.commit();
+
+        return res.status(200).json({
+          application_id: submission.existingId,
+          duplicate: true,
+          message: '이미 저장된 동일 요청입니다.'
+        });
+      }
 
       const result = await conn.query(
         `INSERT INTO as_requests (
@@ -175,6 +196,8 @@ app.post(
 
       // COMMIT 중 연결이 끊기면 저장 여부가 불명확하므로
       // 파일을 지우지 않고 보존합니다.
+      await security.finishSubmission(conn, submission, id);
+
       req.keepUploadFiles = true;
 
       await conn.commit();
@@ -199,6 +222,10 @@ app.post(
         console.error('첨부 정리 실패:', error.code);
       }
 
+      if (err.status) {
+        return security.deny(res, err);
+      }
+
       console.error('신청 저장 실패:', err.code);
 
       res.status(500).json({
@@ -215,6 +242,29 @@ app.post(
     }
   }
 );
+
+app.use('/api', (err, req, res, next) => {
+  if (res.headersSent) return next(err);
+
+  console.error(
+    'API 처리 오류:',
+    err.code || err.type || err.name
+  );
+
+  const status =
+    err.type === 'entity.too.large'
+      ? 413
+      : err.type === 'entity.parse.failed'
+        ? 400
+        : 500;
+
+  res.status(status).json({
+    message: status === 500
+      ? '요청 처리에 실패했습니다.'
+      : '전송 내용이나 크기를 확인하세요.'
+  });
+});
+
 
 if (require.main === module) {
   app.listen(3000, '127.0.0.1', () => {
