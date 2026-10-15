@@ -306,7 +306,7 @@ async function loadDetail(id) {
   $('no-action').hidden = row.status !== 'completed';
 
   updateActionHelp();
-
+  await renderAttachments(row.id);
   $('detail').hidden = false;
   $('detail').scrollIntoView({ behavior: 'smooth' });
 }
@@ -473,3 +473,81 @@ runAction(async () => {
     }
   }
 });
+
+async function renderAttachments(requestId) {
+  let section = document.getElementById('attachment-section');
+
+  if (!section) {
+    section = document.createElement('section');
+    section.id = 'attachment-section';
+
+    document.getElementById('detail-fields').after(section);
+  }
+
+  section.replaceChildren();
+
+  const title = document.createElement('h3');
+  title.textContent = '첨부파일';
+  section.append(title);
+
+  try {
+    const data = await api(
+      '/requests/' +
+      encodeURIComponent(requestId) +
+      '/attachments'
+    );
+
+    if (!data.files.length) {
+      const message = document.createElement('p');
+      message.textContent = '첨부파일이 없습니다.';
+      section.append(message);
+      return;
+    }
+
+    for (const file of data.files) {
+      const row = document.createElement('p');
+      const label = document.createElement('span');
+
+      label.textContent =
+        file.original_name + ' (' +
+        (file.file_size / 1024 / 1024).toFixed(2) +
+        'MB) ';
+
+      row.append(label);
+
+      for (const [action, text] of [
+        ['view', '보기'],
+        ['download', '다운로드']
+      ]) {
+        const button = document.createElement('button');
+
+        button.type = 'button';
+        button.textContent = text;
+
+        button.addEventListener('click', () => {
+          const url =
+            '/api/admin/attachments/' +
+            encodeURIComponent(file.id) +
+            '/' + action;
+
+          window.open(
+            url,
+            '_blank',
+            'noopener,noreferrer'
+          );
+        });
+
+        row.append(button);
+      }
+
+      section.append(row);
+    }
+  } catch (error) {
+    const message = document.createElement('p');
+
+    message.textContent =
+      '첨부 조회 실패: ' + error.message;
+
+    section.append(message);
+  }
+}
