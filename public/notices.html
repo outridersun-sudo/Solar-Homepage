@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>공지사항 | 천일테크윈</title>
-<link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>공지사항 | 천일테크윈</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
 
+<body>
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="index.html">천일테크윈</a>
+
     <nav class="nav">
       <a href="index.html">홈</a>
       <a href="company.html">회사소개</a>
@@ -22,43 +23,43 @@
   </div>
 </header>
 
-
 <section class="page-hero">
   <div class="container">
-    <div class="breadcrumb">HOME / NOTICE</div>
     <h1>공지사항</h1>
-    <p>제품 및 기술지원 관련 소식을 알려드립니다.</p>
+    <p>천일테크윈의 소식을 안내합니다.</p>
   </div>
 </section>
 
 <section class="section">
   <div class="container">
-    <div class="toolbar">
-      <input id="searchInput" class="search" type="search" placeholder="공지사항 검색">
-    </div>
-    <div class="notice-list">
-      <div class="notice-row" data-search="신규 인버터 제품 출시 안내"><div class="num">003</div><div class="title">신규 인버터 제품 출시 안내</div><div class="date">2026-10-05</div></div>
-      <div class="notice-row" data-search="제품 기술자료 업데이트 안내"><div class="num">002</div><div class="title">제품 기술자료 업데이트 안내</div><div class="date">2026-09-25</div></div>
-      <div class="notice-row" data-search="통신 rtu 제품 개발 안내"><div class="num">001</div><div class="title">통신 RTU 제품 개발 안내</div><div class="date">2026-09-10</div></div>
-    </div>
+    <p id="message" role="status" aria-live="polite"></p>
+
+    <div id="list"></div>
+
+    <p>
+      <button id="prev" type="button" class="btn btn-gray">
+        이전
+      </button>
+
+      <span id="page"></span>
+
+      <button id="next" type="button" class="btn btn-gray">
+        다음
+      </button>
+    </p>
+
+    <article id="detail" hidden style="margin-top:30px">
+      <h2 id="title"></h2>
+      <p id="date"></p>
+
+      <div
+        id="content"
+        style="white-space:pre-wrap;overflow-wrap:anywhere"
+      ></div>
+    </article>
   </div>
 </section>
 
-
-<footer class="footer">
-  <div class="container footer-grid">
-    <div>
-      <strong>천일테크윈</strong>
-      <p>태양광 인버터 · 통신 RTU · 발전소 모니터링 솔루션</p>
-    </div>
-    <div>
-      <p>인천광역시 제물포구 화도진로 127</p>
-      <p>TEL 032-764-0671~3 · E-mail info@example.com</p>
-      <p>© 2026 천일테크윈. All Rights Reserved.</p>
-    </div>
-  </div>
-</footer>
-<script src="js/main.js"></script>
-
+<script src="js/notices.js"></script>
 </body>
 </html>

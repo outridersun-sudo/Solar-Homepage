@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>공지 관리 | 천일테크윈</title>
+
+  <style>
+    body {
+      font-family: system-ui;
+      background: #f3f6fa;
+      color: #172b43;
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 30px auto;
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+    }
+
+    input, textarea, button {
+      font: inherit;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    input[type="text"], textarea {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+    }
+
+    button {
+      cursor: pointer;
+      margin: 5px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    td, th {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+
+    #message {
+      white-space: pre-line;
+      color: #9a3100;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+<main>
+  <h1>공지 관리</h1>
+
+  <a href="admin.html">A/S 관리·관리자 로그인</a>
+  |
+  <a href="notices.html">방문자 공지 화면</a>
+
+  <p id="message" role="status" aria-live="polite"></p>
+
+  <section id="management" hidden>
+    <button id="new" type="button">새 공지 작성</button>
+    <button id="refresh" type="button">목록 새로고침</button>
+
+    <div style="overflow:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>제목</th>
+            <th>공개 여부</th>
+            <th>수정일</th>
+            <th>관리</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+    <p>
+      <button id="prev" type="button">이전</button>
+      <span id="page"></span>
+      <button id="next" type="button">다음</button>
+    </p>
+
+    <form id="editor">
+      <h2 id="editor-title">새 공지 작성</h2>
+
+      <label for="title">제목 *</label>
+      <input id="title" type="text" maxlength="200" required>
+
+      <label for="content">본문 *</label>
+      <textarea
+        id="content"
+        rows="12"
+        maxlength="10000"
+        required
+      ></textarea>
+
+      <label>
+        <input id="published" type="checkbox">
+        공개 — 체크하면 방문자에게 표시됩니다.
+      </label>
+
+      <p><button type="submit">저장</button></p>
+    </form>
+  </section>
+</main>
+
+<script src="js/admin-notices.js"></script>
+</body>
+</html>
