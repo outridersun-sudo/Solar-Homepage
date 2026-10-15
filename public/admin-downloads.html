@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>기술자료 관리 | 천일테크윈</title>
+
+  <style>
+    body {
+      font-family: system-ui;
+      background: #f3f6fa;
+      color: #172b43;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 30px auto;
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+    }
+
+    input, select, button {
+      font: inherit;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    input[type="text"], select, input[type="file"] {
+      display: block;
+      width: 100%;
+      margin: 8px 0 16px;
+    }
+
+    button {
+      margin: 5px;
+      cursor: pointer;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    td, th {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+
+    #message {
+      white-space: pre-line;
+      color: #9a3100;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+<main>
+  <h1>기술자료 관리</h1>
+
+    <nav aria-label="관리 메뉴">
+        <a href="admin.html">A/S 관리(관리자 로그인)</a>
+        |
+        <a href="admin-notices.html">공지 관리</a>
+        |
+        <a href="admin-downloads.html">기술자료 관리</a>
+        |
+        <a href="notices.html">방문자 공지</a>
+        |
+        <a href="downloads.html">방문자 자료실</a>
+    </nav>
+
+  <p id="message" role="status" aria-live="polite"></p>
+
+  <section id="management" hidden>
+    <button id="new" type="button">새 자료 등록</button>
+    <button id="refresh" type="button">목록 새로고침</button>
+
+    <div style="overflow:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>구분</th>
+            <th>제품 / 자료명</th>
+            <th>버전</th>
+            <th>공개</th>
+            <th>관리</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+    <p>
+      <button id="prev" type="button">이전</button>
+      <span id="page"></span>
+      <button id="next" type="button">다음</button>
+    </p>
+
+    <form id="editor">
+      <h2 id="editor-title">새 자료 등록</h2>
+
+      <label for="category">구분 *</label>
+      <select id="category" required>
+        <option>카탈로그</option>
+        <option>매뉴얼</option>
+        <option>인증서</option>
+        <option>기타</option>
+      </select>
+
+      <label for="product">제품명 *</label>
+      <input id="product" type="text" maxlength="150" required>
+
+      <label for="title">자료명 *</label>
+      <input id="title" type="text" maxlength="200" required>
+
+      <label for="version">버전 *</label>
+      <input
+        id="version"
+        type="text"
+        maxlength="50"
+        required
+        placeholder="예: V1.0"
+      >
+
+      <label for="file">PDF — 최대 20MB *</label>
+      <input id="file" type="file" accept=".pdf" required>
+
+      <p id="file-help">
+        새 자료에는 PDF 1개가 필요합니다.
+      </p>
+
+      <label>
+        <input id="published" type="checkbox">
+        공개 — 체크하면 방문자가 파일을 볼 수 있습니다.
+      </label>
+
+      <p><button type="submit">저장</button></p>
+    </form>
+  </section>
+</main>
+
+<script src="js/admin-downloads.js"></script>
+</body>
+</html>

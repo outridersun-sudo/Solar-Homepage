@@ -1,12 +1,29 @@
 const $ = id => document.getElementById(id);
 
 let page = 1;
+let hasNext = false;
 let busy = false;
+let detailVersion = 0;
+let opener = null;
 
 function date(value) {
-  return new Date(value).toLocaleDateString('ko-KR', {
-    timeZone: 'Asia/Seoul'
-  });
+  if (!value) return '-';
+
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) return '-';
+
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(parsed);
+
+  const get = type =>
+    parts.find(part => part.type === type).value;
+
+  return `${get('year')}-${get('month')}-${get('day')}`;
 }
 
 async function api(url) {
@@ -14,80 +31,183 @@ async function api(url) {
     cache: 'no-store'
   });
 
-  const data = await response.json();
+  let data;
+
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error(
+      '공지 응답을 확인하지 못했습니다. 잠시 후 다시 시도하세요.'
+    );
+  }
 
   if (!response.ok) {
-    throw new Error(data.message || '공지 조회 실패');
+    throw new Error(
+      data.message || '공지 조회에 실패했습니다.'
+    );
   }
 
   return data;
 }
 
-async function detail(id) {
-  const row = await api('/' + encodeURIComponent(id));
+function messageRow(text) {
+  const tr = document.createElement('tr');
+  const td = document.createElement('td');
 
-  $('title').textContent = row.title;
-  $('date').textContent =
-    '작성일: ' + date(row.created_at) +
-    ' / 수정일: ' + date(row.updated_at);
+  td.colSpan = 4;
+  td.className = 'notice-empty';
+  td.textContent = text;
 
-  $('content').textContent = row.content;
-  $('detail').hidden = false;
-  $('detail').scrollIntoView({ behavior: 'smooth' });
+  tr.append(td);
+  $('list').replaceChildren(tr);
+}
+
+async function detail(id, button) {
+  if (busy) return;
+
+  const version = ++detailVersion;
+
+  $('message').textContent = '';
+
+  try {
+    const row = await api('/' + encodeURIComponent(id));
+
+    if (version !== detailVersion) return;
+
+    opener = button;
+
+    $('title').textContent = row.title;
+    $('date').textContent =
+      '등록일 ' + date(row.created_at) +
+      '  ·  수정일 ' + date(row.updated_at);
+
+    $('content').textContent = row.content;
+    $('detail').hidden = false;
+
+    $('detail').scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+
+    $('title').focus({ preventScroll: true });
+  } catch (err) {
+    if (version !== detailVersion) return;
+
+    $('detail').hidden = true;
+    $('message').textContent = err.message;
+  }
 }
 
 async function list(target = page) {
   if (busy) return;
 
   busy = true;
+  detailVersion++;
+
+  $('detail').hidden = true;
+  $('message').textContent = '';
+  $('table-region').setAttribute('aria-busy', 'true');
+
   $('prev').disabled = true;
   $('next').disabled = true;
-  $('message').textContent = '';
+  $('reload').disabled = true;
 
   try {
     const data = await api('?page=' + target);
 
     page = target;
+    hasNext = Boolean(data.hasNext);
+
     $('list').replaceChildren();
-    $('detail').hidden = true;
 
     for (const row of data.rows) {
-      const p = document.createElement('p');
-      const button = document.createElement('button');
+      const tr = document.createElement('tr');
 
-      button.type = 'button';
-      button.className = 'btn btn-gray';
-      button.textContent = row.title;
+      const number = document.createElement('td');
+      number.className = 'notice-number';
+      number.textContent = row.id;
 
-      button.onclick = () => {
-        detail(row.id).catch(err => {
-          $('message').textContent = err.message;
-        });
-      };
+      const titleCell = document.createElement('td');
+      const titleButton = document.createElement('button');
 
-      p.append(
-        button,
-        document.createTextNode(' ' + date(row.created_at))
+      titleButton.type = 'button';
+      titleButton.className = 'notice-title-button';
+      titleButton.textContent = row.title;
+
+      titleButton.onclick = () =>
+        detail(row.id, titleButton);
+
+      titleCell.append(titleButton);
+
+      const created = document.createElement('td');
+      created.className = 'notice-date';
+      created.textContent = date(row.created_at);
+
+      const action = document.createElement('td');
+      const view = document.createElement('button');
+
+      view.type = 'button';
+      view.className = 'notice-view';
+      view.textContent = '보기';
+
+      view.setAttribute(
+        'aria-label',
+        row.title + ' 본문 보기'
       );
 
-      $('list').append(p);
+      view.onclick = () => detail(row.id, view);
+
+      action.append(view);
+      tr.append(number, titleCell, created, action);
+
+      $('list').append(tr);
     }
 
     if (!data.rows.length) {
-      $('list').textContent = '등록된 공지가 없습니다.';
+      messageRow('등록된 공지가 없습니다.');
     }
 
+    $('summary').textContent =
+      '현재 페이지 ' + data.rows.length + '건';
+
     $('page').textContent = page + ' 페이지';
-    $('prev').disabled = page === 1;
-    $('next').disabled = !data.hasNext;
   } catch (err) {
-    $('message').textContent = err.message;
+    $('message').textContent =
+      err.message + ' 새로고침 버튼으로 다시 시도하세요.';
+
+    if (!$('list').querySelector('button')) {
+      messageRow('공지를 불러오지 못했습니다.');
+
+      $('summary').textContent =
+        '연결 상태를 확인해 주세요.';
+    }
   } finally {
     busy = false;
+
+    $('table-region').setAttribute('aria-busy', 'false');
+
+    $('prev').disabled = page === 1;
+    $('next').disabled = !hasNext;
+    $('reload').disabled = false;
   }
 }
 
 $('prev').onclick = () => list(page - 1);
 $('next').onclick = () => list(page + 1);
+$('reload').onclick = () => list(page);
+
+$('close-detail').onclick = () => {
+  detailVersion++;
+  $('detail').hidden = true;
+
+  $('table-region').scrollIntoView({
+    behavior: 'smooth',
+    block: 'center'
+  });
+
+  if (opener?.isConnected) {
+    opener.focus({ preventScroll: true });
+  }
+};
 
 list();

@@ -2,42 +2,278 @@ const form = document.getElementById('as-request-form');
 const button = form.querySelector('button[type="submit"]');
 const resultBox = document.getElementById('request-result');
 
+const attachments = document.getElementById('attachments');
+const camera = document.getElementById('camera-photo');
+const cameraButton = document.getElementById('camera-button');
+const fileList = document.getElementById('attachment-list');
+
+const selected = [];
+const maxSize = 10 * 1024 * 1024;
+
 let locked = false;
+let processing = false;
 
-form.addEventListener('submit', async event => {
-  event.preventDefault();
+// 화면 너비 대신 브라우저의 휴대폰 정보를 사용
+const isPhone =
+  typeof navigator.userAgentData?.mobile === 'boolean'
+    ? navigator.userAgentData.mobile
+    : /Android.*Mobile|iPhone|iPod/i.test(navigator.userAgent);
 
-  if (locked || !form.reportValidity()) return;
+document.getElementById('mobile-camera').hidden = !isPhone;
 
-  const files = Array.from(
-    document.getElementById('attachments').files
-  );
+function updateButtons() {
+  button.disabled = locked || processing;
+  attachments.disabled = locked || processing;
+  camera.disabled = locked || processing;
+  cameraButton.disabled = locked || processing;
+}
 
-  if (files.length > 5) {
-    resultBox.textContent = '첨부는 최대 5개입니다.';
-    return;
+function renderFiles() {
+  fileList.replaceChildren();
+
+  for (const [index, item] of selected.entries()) {
+    const row = document.createElement('div');
+    row.className = 'attachment-item';
+
+    if (item.preview) {
+      const image = document.createElement('img');
+      image.src = item.preview;
+      image.alt = item.file.name + ' 미리보기';
+      row.append(image);
+    }
+
+    const name = document.createElement('span');
+
+    name.textContent =
+      item.file.name + ' (' +
+      (item.file.size / 1024 / 1024).toFixed(2) +
+      'MB)';
+
+    row.append(name);
+
+    const remove = document.createElement('button');
+
+    remove.type = 'button';
+    remove.textContent = '제거';
+    remove.disabled = locked || processing;
+    remove.setAttribute(
+      'aria-label',
+      item.file.name + ' 제거'
+    );
+
+    remove.onclick = () => {
+      if (locked || processing) return;
+
+      const [removed] = selected.splice(index, 1);
+
+      if (removed.preview) {
+        URL.revokeObjectURL(removed.preview);
+      }
+
+      renderFiles();
+    };
+
+    row.append(remove);
+    fileList.append(row);
   }
+
+  const count = document.createElement('p');
+  count.className = 'form-help';
+  count.textContent =
+    '선택한 파일: ' + selected.length + ' / 5개';
+
+  fileList.append(count);
+}
+
+function addFiles(files) {
+  const additions = [];
 
   for (const file of files) {
     if (
       !/\.(jpe?g|png|webp|pdf)$/i.test(file.name) ||
-      file.size === 0 ||
-      file.size > 10 * 1024 * 1024
+      !file.size ||
+      file.size > maxSize
     ) {
-      resultBox.textContent =
-        'JPG·PNG·WebP·PDF만 가능하며, ' +
-        '빈 파일은 제외하고 파일당 최대 10MB입니다.';
-      return;
+      throw new Error(
+        'JPG·PNG·WebP·PDF만 가능하며, 파일당 최대 10MB입니다.'
+      );
     }
+
+    const duplicate = [
+      ...selected.map(item => item.file),
+      ...additions
+    ].some(item =>
+      item.name === file.name &&
+      item.size === file.size &&
+      item.lastModified === file.lastModified
+    );
+
+    if (!duplicate) additions.push(file);
   }
 
+  if (selected.length + additions.length > 5) {
+    throw new Error(
+      '촬영 사진과 선택 파일을 합해 최대 5개입니다.'
+    );
+  }
+
+  for (const file of additions) {
+    selected.push({
+      file,
+      preview: /\.(jpe?g|png|webp)$/i.test(file.name)
+        ? URL.createObjectURL(file)
+        : null
+    });
+  }
+
+  renderFiles();
+}
+
+async function cameraJpeg(file) {
+  const url = URL.createObjectURL(file);
+
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image();
+
+      img.onload = () => resolve(img);
+
+      img.onerror = () => reject(new Error(
+        '촬영 사진을 읽지 못했습니다. ' +
+        '카메라 저장 형식을 JPEG로 설정하거나 파일 선택을 이용하세요.'
+      ));
+
+      img.src = url;
+    });
+
+    // 촬영 사진은 긴 변 최대 2560px의 JPEG로 변환
+    const scale = Math.min(
+      1,
+      2560 / Math.max(image.naturalWidth, image.naturalHeight)
+    );
+
+    const canvas = document.createElement('canvas');
+
+    canvas.width = Math.max(
+      1,
+      Math.round(image.naturalWidth * scale)
+    );
+
+    canvas.height = Math.max(
+      1,
+      Math.round(image.naturalHeight * scale)
+    );
+
+    const context = canvas.getContext('2d');
+
+    if (!context) {
+      throw new Error(
+        '이 브라우저에서 사진 변환을 지원하지 않습니다.'
+      );
+    }
+
+    context.fillStyle = '#fff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(
+      image, 0, 0, canvas.width, canvas.height
+    );
+
+    const blob = await new Promise(resolve => {
+      canvas.toBlob(resolve, 'image/jpeg', 0.88);
+    });
+
+    if (!blob) {
+      throw new Error('사진을 JPEG로 변환하지 못했습니다.');
+    }
+
+    const stamp = new Date()
+      .toISOString()
+      .replace(/[-:.TZ]/g, '');
+
+    return new File(
+      [blob],
+      'AS-photo-' + stamp + '.jpg',
+      {
+        type: 'image/jpeg',
+        lastModified: Date.now()
+      }
+    );
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+// 일반 파일 선택
+attachments.addEventListener('change', () => {
+  if (locked || processing) return;
+
+  resultBox.textContent = '';
+
+  try {
+    addFiles(Array.from(attachments.files));
+  } catch (error) {
+    resultBox.textContent = error.message;
+  }
+
+  attachments.value = '';
+});
+
+// 카메라 열기
+cameraButton.addEventListener('click', () => {
+  if (locked || processing) return;
+
+  if (selected.length >= 5) {
+    resultBox.textContent =
+      '이미 5개를 선택했습니다. 파일을 제거한 뒤 촬영하세요.';
+    return;
+  }
+
+  camera.value = '';
+  camera.click();
+});
+
+// 촬영 사진 추가
+camera.addEventListener('change', async () => {
+  if (locked || processing || !camera.files.length) return;
+
+  const file = camera.files[0];
+
+  processing = true;
+  updateButtons();
+  renderFiles();
+
+  resultBox.textContent = '촬영한 사진을 준비하고 있습니다.';
+
+  try {
+    const converted = await cameraJpeg(file);
+    addFiles([converted]);
+
+    resultBox.textContent =
+      '사진을 추가했습니다. 필요하면 다시 촬영할 수 있습니다.';
+  } catch (error) {
+    resultBox.textContent = error.message;
+  } finally {
+    camera.value = '';
+    processing = false;
+
+    updateButtons();
+    renderFiles();
+  }
+});
+
+// 신청서 제출
+form.addEventListener('submit', async event => {
+  event.preventDefault();
+
+  if (locked || processing || !form.reportValidity()) return;
+
+  const count = selected.length;
   const data = new FormData(form);
 
-  // 선택하지 않은 빈 파일 항목을 제외하고 추가
   data.delete('attachments');
 
-  for (const file of files) {
-    data.append('attachments', file);
+  for (const item of selected) {
+    data.append('attachments', item.file);
   }
 
   data.set(
@@ -46,14 +282,13 @@ form.addEventListener('submit', async event => {
   );
 
   locked = true;
-  button.disabled = true;
-  button.textContent = '제출 중…';
+  updateButtons();
+  renderFiles();
 
-  resultBox.textContent =
-    '파일이 있으면 전송에 시간이 걸릴 수 있습니다.';
+  button.textContent = '제출 중…';
+  resultBox.textContent = '사진과 신청 내용을 전송하고 있습니다.';
 
   try {
-    // Content-Type은 브라우저가 multipart 경계와 함께 설정
     const response = await fetch('/api/as-requests', {
       method: 'POST',
       body: data
@@ -63,7 +298,7 @@ form.addEventListener('submit', async event => {
 
     if (!response.ok) {
       if (response.status >= 500) {
-        throw new Error('저장 결과 확인 필요');
+        throw new Error('결과 확인 필요');
       }
 
       resultBox.textContent =
@@ -77,16 +312,24 @@ form.addEventListener('submit', async event => {
       typeof result.application_id !== 'string' ||
       !/^\d+$/.test(result.application_id)
     ) {
-      throw new Error('신청 관리번호 확인 실패');
+      throw new Error('신청번호 확인 실패');
     }
 
     resultBox.textContent =
       '접수 요청이 제출되었습니다.\n' +
       '신청 관리번호: ' + result.application_id + '\n' +
-      '첨부파일: ' + files.length + '개\n' +
+      '첨부파일: ' + count + '개\n' +
       '관리자 검토 후 정식 접수됩니다.';
 
     form.reset();
+
+    for (const item of selected) {
+      if (item.preview) URL.revokeObjectURL(item.preview);
+    }
+
+    selected.length = 0;
+    renderFiles();
+
     button.textContent = '제출 완료';
   } catch {
     resultBox.textContent =
@@ -95,9 +338,13 @@ form.addEventListener('submit', async event => {
 
     button.textContent = '신청 확인 필요';
   } finally {
+    updateButtons();
+    renderFiles();
+
     if (!locked) {
-      button.disabled = false;
       button.textContent = 'A/S 접수 요청';
     }
   }
 });
+
+renderFiles();

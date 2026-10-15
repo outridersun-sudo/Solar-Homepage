@@ -19,6 +19,7 @@ const pool = mariadb.createPool({
 app.use(express.json({ limit: '100kb' }));
 
 require('./server/notices').registerPublic(app, pool);
+require('./server/downloads').registerPublic(app, pool);
 require('./server/admin')(app, pool);
 
 app.use(express.static(path.join(__dirname, 'public')));

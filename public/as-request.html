@@ -199,9 +199,30 @@
             multiple
           >
 
-          <div class="form-help">
-            JPG·PNG·WebP·PDF, 최대 5개, 파일당 10MB까지 첨부할 수 있습니다.
+          <div id="mobile-camera" hidden>
+            <button
+              id="camera-button"
+              class="camera-button"
+              type="button"
+            >
+              사진 촬영
+            </button>
+
+            <input
+              id="camera-photo"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              hidden
+            >
           </div>
+
+          <div class="form-help">
+            사진과 PDF를 합해 최대 5개, 파일당 10MB까지 첨부할 수 있습니다.
+            선택한 파일은 아래 목록에서 확인하세요.
+          </div>
+
+          <div id="attachment-list"></div>
         </div>
 
         <div class="form-group full">

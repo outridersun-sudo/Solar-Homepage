@@ -150,3 +150,130 @@ textarea.form-control{min-height:150px;resize:vertical}
 /* Hero 3행 유지: Monitoring + A/S Service 통합 행 */
 .hero-stat-monitoring-as b{font-size:26px;line-height:1.35}
 .hero-stat-monitoring-as span{display:block;line-height:1.55;margin-top:3px}
+@media (max-width: 620px) {
+  .site-header .header-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding-top: 12px;
+    padding-bottom: 10px;
+  }
+
+  .site-header .nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 4px 16px;
+  }
+
+  .site-header .nav a {
+    display: block;
+    padding: 8px 0;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+}
+
+/* PC 메뉴의 밑줄을 글자 가까이 배치 */
+@media (min-width: 621px) {
+  .site-header .nav a {
+    position: relative;
+    border-bottom: none;
+  }
+
+  .site-header .nav a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 22px;
+    height: 3px;
+    background: transparent;
+  }
+
+  .site-header .nav a:hover::after,
+  .site-header .nav a.active::after {
+    background: var(--blue);
+  }
+}
+
+/* A/S 신청의 휴대폰 사진 촬영 */
+#mobile-camera[hidden] {
+  display: none !important;
+}
+
+#mobile-camera {
+  margin-top: 10px;
+}
+
+#mobile-camera .camera-button {
+  border: 0;
+  border-radius: 8px;
+  background: #1367a8;
+  color: white;
+  padding: 12px 20px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#attachment-list {
+  margin-top: 10px;
+}
+
+#attachment-list .attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+#attachment-list .attachment-item img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+#attachment-list .attachment-item span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+
+#attachment-list .attachment-item button {
+  flex-shrink: 0;
+  border: 1px solid #dce4eb;
+  border-radius: 6px;
+  padding: 7px 10px;
+  background: white;
+  color: #475569;
+  cursor: pointer;
+}
+
+#mobile-camera button:disabled,
+#attachment-list button:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+/* 페이지 내용이 짧아도 푸터를 화면 하단에 배치 */
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+body > header,
+body > .page-hero,
+body > footer {
+  flex-shrink: 0;
+}
+
+body > .footer {
+  margin-top: auto;
+}

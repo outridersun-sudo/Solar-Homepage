@@ -243,6 +243,7 @@ module.exports = function registerAdmin(app, pool) {
 
   // 상세 조회·검토·승인 기능 연결
   require('./notices').registerAdmin(app, pool);
+  require('./downloads').registerAdmin(app, pool);
   require('./attachments').registerAdmin(app, pool);
   require('./review')(app, pool);
 
