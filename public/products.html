@@ -5,15 +5,50 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>제품소개 | 천일테크윈</title>
 <link rel="stylesheet" href="css/style.css">
+<style>
+/* Product content only: existing site header, hero and footer styles are untouched. */
+.products-content{--pc-ink:#0b2047;--pc-blue:#087bdf;color:var(--pc-ink);background:#f5f8fc;padding:52px 24px;font-family:inherit}
+.products-content *{box-sizing:border-box}.products-content .pc-wrap{max-width:1200px;margin:auto}.products-content h2{font-size:clamp(26px,3vw,36px);line-height:1.3;margin:0 0 10px;letter-spacing:-.04em}.products-content .pc-lead{font-size:18px;color:#59708f;margin:0 0 28px}.products-content .pc-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.products-content .pc-card{background:white;border:1px solid #e0e8f2;border-radius:12px;overflow:hidden;min-width:0;display:flex;flex-direction:column}.products-content .pc-product-img{width:100%;height:240px;object-fit:contain;padding:24px 18px 8px}.products-content .pc-body{padding:18px 24px 28px;display:flex;flex-direction:column;flex:1}.products-content .pc-power{font-size:clamp(34px,4vw,48px);font-weight:800;letter-spacing:-.05em;color:#084294;line-height:1.1;margin:0 0 12px}.products-content .pc-power small{font-size:.6em;letter-spacing:0;margin-left:5px}.products-content h3{font-size:20px;line-height:1.4;margin:0 0 24px;overflow-wrap:anywhere}.products-content .pc-link{color:#0076de;text-decoration:none;font-size:17px;font-weight:700;display:inline-block;margin-top:auto;align-self:flex-start}.products-content .pc-link:hover{text-decoration:underline}.products-content a:focus-visible{outline:3px solid #0578dc;outline-offset:5px}.products-content .pc-note{font-size:14px;color:#64748b;margin:14px 0 0}.products-content .pc-services{margin-top:62px}.products-content .pc-service-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px}.products-content .pc-service-img{height:250px;width:100%;object-fit:contain;padding:22px}.products-content .pc-service-grid h3{font-size:30px;margin-bottom:10px}.products-content .pc-description{font-size:18px;line-height:1.7;color:#59708f;margin:0 0 22px}.products-content .pc-contact{margin-top:26px;border-radius:12px;padding:26px 32px;background:#e4f3ff;display:flex;align-items:center;gap:20px;justify-content:space-between}.products-content .pc-contact h3{font-size:23px;margin:0 0 6px}.products-content .pc-contact p{margin:0;color:#59708f;line-height:1.6}.products-content .pc-button{background:#087bdf;border-radius:8px;color:white;padding:17px 32px;white-space:nowrap;text-decoration:none;font-weight:700}.products-content .pc-document{display:flex;justify-content:space-between;align-items:center;gap:16px;border-top:1px solid #dee7f1;margin-top:28px;padding-top:24px}.products-content .pc-document p{margin:0;color:#59708f;line-height:1.6}@media(max-width:1000px){.products-content .pc-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.products-content{padding:32px 16px}.products-content .pc-grid,.products-content .pc-service-grid{grid-template-columns:1fr}.products-content .pc-product-img{height:270px}.products-content .pc-services{margin-top:40px}.products-content .pc-contact,.products-content .pc-document{align-items:flex-start;flex-direction:column}.products-content .pc-contact{padding:24px}.products-content .pc-button{display:block;text-align:center;width:100%}.products-content .pc-service-img{height:220px}}
+
+.products-content .pc-grid h3{font-size:18px;min-height:2.8em;word-break:keep-all;overflow-wrap:normal}.products-content .pc-card{transition:box-shadow .2s ease}.products-content .pc-card:hover{box-shadow:0 10px 28px rgba(15,39,64,.08)}.products-content .pc-service-img{height:260px;padding:28px;object-fit:contain}.products-content .pc-service-grid .pc-note{font-size:13px}
+
+/* Product cards: 3 + 2 desktop layout, reference image colors and shadows. */
+.products-content .pc-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:26px 22px}
+.products-content .pc-card{border:1px solid #e0e6eb;border-radius:14px;box-shadow:0 10px 30px rgba(15,39,64,.08)}
+.products-content .pc-card:hover{box-shadow:0 14px 34px rgba(15,39,64,.12)}
+.products-content .pc-product-img,.products-content .pc-service-img{background:linear-gradient(135deg,#e6f2fa,#dff3ec);padding:26px;height:270px}
+.products-content .pc-body{background:#fff;padding:26px 24px 28px}
+.products-content .pc-grid h3{min-height:2.8em;overflow-wrap:anywhere}
+@media(max-width:900px){.products-content .pc-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.products-content .pc-grid{grid-template-columns:1fr}}
+
+#inverters-title,
+#rtu,
+#monitoring {
+  scroll-margin-top: 140px;
+}
+
+#inverters-title:target,
+#rtu:target,
+#monitoring:target {
+  outline: 2px solid #087bdf;
+  outline-offset: 6px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+</style>
 </head>
 <body>
-
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="index.html">천일테크윈</a>
     <nav class="nav">
       <a href="index.html">홈</a>
-      <a href="company.html">회사소개</a>
+      <a href="company.html">사업영역</a>
       <a href="products.html">제품소개</a>
       <a href="downloads.html">기술자료</a>
       <a href="as-service.html">A/S 지원</a>
@@ -21,8 +56,6 @@
     </nav>
   </div>
 </header>
-
-
 <section class="page-hero">
   <div class="container">
     <div class="breadcrumb">HOME / PRODUCTS</div>
@@ -30,50 +63,60 @@
     <p>태양광 인버터와 현장 통신 제품을 소개합니다.</p>
   </div>
 </section>
+<main class="products-content" id="product-catalog"><div class="pc-wrap"><section aria-labelledby="inverters-title"><h2 id="inverters-title">태양광 인버터</h2><p class="pc-lead">용량별 제품을 확인하세요.</p><div class="pc-grid"><article class="pc-card"><img class="pc-product-img" src="assets/images/solis-350kw.png" alt="Solis S6-GU350K-EHV-M12-K30 350kW 인버터" width="400" height="400"><div class="pc-body"><p class="pc-power">350<small>kW</small></p><h3>S6-GU350K-EHV-M12-K30</h3><a class="pc-link" href="product-350kw.html" aria-label="350kW 인버터 상세 사양 보기">상세 사양 보기 <span aria-hidden="true">→</span></a></div></article>
+  <article class="pc-card">
+    <img
+      class="pc-product-img"
+      src="assets/images/solis-150kw.png"
+      alt="Solis S6-GC150K-K 150kW 인버터"
+      width="400"
+      height="400"
+    >
 
-<section class="section">
-  <div class="container">
-    <div class="toolbar">
-      <input id="searchInput" class="search" type="search" placeholder="제품명 또는 모델명 검색">
-      <select class="select">
-        <option>전체 제품</option>
-        <option>인버터</option>
-        <option>통신 RTU</option>
-      </select>
+    <div class="pc-body">
+      <p class="pc-power">
+        150<small>kW</small>
+      </p>
+
+      <h3>S6-GC150K-K Series</h3>
+
+      <a
+        class="pc-link"
+        href="product-150kw.html"
+        aria-label="150kW 인버터 상세 사양 보기"
+      >
+        상세 사양 보기
+        <span aria-hidden="true">→</span>
+      </a>
     </div>
-    <div class="cards">
-      <article class="card" data-search="solis 125kw 인버터">
-        <div class="card-media">Solis 인버터 이미지</div>
-        <div class="card-body">
-          <span class="badge">INVERTER</span>
-          <h3>Solis 125kW</h3>
-          <p>대용량 상업용 태양광 발전소용 인버터 제품 예시입니다.</p>
-          <a class="card-link" href="product-detail.html">상세 사양 보기 →</a>
-        </div>
-      </article>
-      <article class="card" data-search="통신 rtu rs485 ethernet">
-        <div class="card-media">RTU 제품 이미지</div>
-        <div class="card-body">
-          <span class="badge">RTU</span>
-          <h3>Communication RTU</h3>
-          <p>RS485 장비 데이터를 수집하여 Ethernet 또는 외장 통신장치로 전달합니다.</p>
-          <a class="card-link" href="product-detail.html">상세 사양 보기 →</a>
-        </div>
-      </article>
-      <article class="card" data-search="모니터링 클라우드 monitoring cloud">
-        <div class="card-media">모니터링 클라우드 화면 이미지</div>
-        <div class="card-body">
-          <span class="badge">CLOUD</span>
-          <h3>Monitoring Cloud</h3>
-          <p>발전소의 발전량, 인버터 운전상태, Fault 및 주요 데이터를 원격으로 확인할 수 있는 클라우드 기반 모니터링 서비스입니다.</p>
-          <a class="card-link" href="product-detail.html">서비스 상세 보기 →</a>
-        </div>
-      </article>
-    </div>
-  </div>
-</section>
-
-
+  </article>  
+  <article class="pc-card"><img class="pc-product-img" src="assets/images/solis-110kw.png" alt="Solis S5-GC110K-K 110kW 인버터" width="400" height="400"><div class="pc-body"><p class="pc-power">110<small>kW</small></p><h3>S5-GC110K-K Series</h3>
+    <a
+      class="pc-link"
+      href="product-110kw.html"
+      aria-label="110kW 인버터 상세 사양 보기"
+    >
+      상세 사양 보기 <span aria-hidden="true">→</span>
+    </a>  
+    </div></article><article class="pc-card"><img class="pc-product-img" src="assets/images/solis-60kw.png" alt="Solis S5-GC60K-K 60kW 인버터" width="400" height="400"><div class="pc-body"><p class="pc-power">60<small>kW</small></p><h3>S5-GC60K-K Series</h3>
+    <a
+      class="pc-link"
+      href="product-60kw.html"
+      aria-label="60kW 인버터 상세 사양 보기"
+    >
+      상세 사양 보기 <span aria-hidden="true">→</span>
+    </a>      
+    </div></article><article class="pc-card"><img class="pc-product-img" src="assets/images/solis-36kw.png" alt="Solis S6-GC36K-K 36kW 인버터" width="400" height="400"><div class="pc-body"><p class="pc-power">36<small>kW</small></p><h3>S6-GC36K-K Series</h3>
+    <a
+      class="pc-link"
+      href="product-36kw.html"
+      aria-label="36kW 인버터 상세 사양 보기"
+    >
+      상세 사양 보기 <span aria-hidden="true">→</span>
+    </a>      
+    </div></article></div><p class="pc-note">제품 이미지는 Solis 브로슈어 기준입니다. 상세 사양은 PDF에서 확인하세요.</p></section>
+<section class="pc-services" aria-labelledby="services-title"><h2 id="services-title">통신 · 모니터링</h2><div class="pc-service-grid"><article class="pc-card" id="rtu"><img class="pc-service-img" src="assets/images/rtu.png" alt="Solis 브로슈어에 표시된 RTU 구성 예시" width="640" height="360" loading="lazy"><div class="pc-body"><h3>통신 RTU</h3><p class="pc-description">인버터 정보를 수집하여 서버로 전송합니다.</p><p class="pc-note" style="margin:0 0 18px">Solis 브로슈어의 구성 예시 이미지입니다.</p><a class="pc-link" href="assets/docs/solis-brochure.pdf#page=11" target="_blank" rel="noopener">제품 자료 보기 →</a></div></article><article class="pc-card" id="monitoring"><img class="pc-service-img" src="assets/images/monitoring.png" alt="Solis 브로슈어의 발전소 통합 모니터링 화면" width="640" height="360" loading="lazy"><div class="pc-body"><h3>모니터링 서비스</h3><p class="pc-description">발전량과 운전 상태를 원격으로 확인합니다.</p><p class="pc-note" style="margin:0 0 18px">Solis 브로슈어의 모니터링 화면 예시입니다.</p><a class="pc-link" href="assets/docs/solis-brochure.pdf#page=11" target="_blank" rel="noopener">서비스 자료 보기 →</a></div></article></div></section>
+</div></main>
 <footer class="footer">
   <div class="container footer-grid">
     <div>
@@ -88,6 +131,5 @@
   </div>
 </footer>
 <script src="js/main.js"></script>
-
 </body>
 </html>

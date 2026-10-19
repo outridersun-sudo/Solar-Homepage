@@ -1,0 +1,58 @@
+.product-spec{max-width:1180px;width:calc(100% - 40px);margin:40px auto 64px;color:#0f2740}
+.product-spec .back{display:inline-block;color:#1367a8;font-weight:700;margin-bottom:22px}
+.product-spec .overview{border:1px solid #eadfd3;border-radius:16px;background:#faf0e5;box-shadow:0 10px 30px rgba(15,39,64,.08);padding:38px;display:grid;grid-template-columns:32% 1fr;gap:34px;align-items:center}
+.product-spec .product{width:100%;height:330px;object-fit:contain}
+.product-spec .eyebrow{color:#ad4a05;font-size:15px;margin:0 0 8px}
+.product-spec h2{font-size:28px;line-height:1.35;overflow-wrap:anywhere;color:#e56508;margin:0 0 24px}
+.product-spec .features{display:grid;grid-template-columns:1fr 1fr;gap:24px 28px}
+.product-spec h3{font-size:20px;color:#bc5100;margin:0 0 9px}
+.product-spec .features ul{padding-left:19px;color:#475569;font-size:15px;line-height:1.85;margin:0}
+.product-spec .features li::marker{color:#ec790d}
+.product-spec .spec-section{margin-top:44px}
+.product-spec .spec-section h2{color:#0f2740;margin-bottom:8px}
+.product-spec .intro{color:#64748b;margin:0 0 20px;line-height:1.7}
+.product-spec .spec-wrap{border:1px solid #dfe6ed;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 8px 24px rgba(15,39,64,.04)}
+.product-spec .model-strip{display:grid;grid-template-columns:25% 1fr;background:#f58220;color:#fff;font-size:16px}
+.product-spec .model-strip strong{padding:12px 20px;border-right:1px solid rgba(255,255,255,.5)}
+.product-spec .model-strip span{padding:12px 20px;text-align:center;font-weight:700;overflow-wrap:anywhere}
+.product-spec .spec-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:stretch}
+.product-spec .spec-group{min-width:0;background:#fff}
+.product-spec .spec-group:nth-child(even){border-left:1px solid #dfe6ed}
+.product-spec .spec-group:nth-child(n+3){border-top:1px solid #dfe6ed}
+.product-spec table{width:100%;min-width:0;border-collapse:collapse;table-layout:fixed}
+.product-spec th,.product-spec td{padding:13px 16px;border-bottom:1px solid #e7edf2;font-size:16px;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+.product-spec th{width:45%;background:#f2f6fa;font-weight:700;color:#334155}
+.product-spec td{background:#fff;color:#24354a}
+.product-spec .category th{background:#fff0e2;color:#9a4300;font-size:17px;font-weight:800;border-top:1px solid #eadfd3}
+.product-spec .spec-group table tr:first-child th{border-top:0}
+.product-spec .spec-group table tr:last-child th,.product-spec .spec-group table tr:last-child td{border-bottom:1px solid #e7edf2}
+.product-spec small{display:block;color:#64748b;font-size:13px;line-height:1.6;margin-top:5px}
+.product-spec .source-note{font-size:13px;color:#64748b;margin:14px 0 0;line-height:1.7}
+.product-spec .pdf{margin-top:26px;padding:25px 28px;background:#edf5fc;border:1px solid #dbe9f4;border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.product-spec .pdf strong{font-size:20px;display:block;margin-bottom:4px}
+.product-spec .pdf p{color:#59708f;font-size:15px}
+.product-spec .pdf a{display:inline-block;background:#1367a8;color:#fff;border-radius:8px;padding:14px 23px;font-weight:700;white-space:nowrap}
+.product-spec a:focus-visible{outline:3px solid #f59e0b;outline-offset:4px}
+
+@media(max-width:900px){
+  .product-spec .overview{grid-template-columns:1fr;padding:28px}
+  .product-spec .product{height:290px}
+}
+
+@media(max-width:850px){
+  .product-spec .spec-columns{grid-template-columns:1fr}
+  .product-spec .spec-group:nth-child(even){border-left:0}
+  .product-spec .spec-group:nth-child(n+2){border-top:1px solid #dfe6ed}
+}
+
+@media(max-width:600px){
+  .product-spec{width:calc(100% - 28px);margin-top:26px}
+  .product-spec .overview{padding:22px;gap:22px}
+  .product-spec h2{font-size:23px}
+  .product-spec .features{grid-template-columns:1fr;gap:20px}
+  .product-spec th,.product-spec td{padding:12px;font-size:14px}
+  .product-spec .model-strip{font-size:14px}
+  .product-spec .model-strip strong,.product-spec .model-strip span{padding:12px}
+  .product-spec .pdf{flex-direction:column;align-items:stretch;padding:22px}
+  .product-spec .pdf a{text-align:center}
+}

@@ -236,6 +236,10 @@ module.exports = function registerAdmin(app, pool) {
   require('./notices').registerAdmin(app, pool);
   require('./downloads').registerAdmin(app, pool);
   require('./attachments').registerAdmin(app, pool);
+
+  // 관리자 점검 기록
+  require('./inspections')(app, pool);
+
   require('./review')(app, pool);
 
   app.use('/api/admin', (err, req, res, next) => {

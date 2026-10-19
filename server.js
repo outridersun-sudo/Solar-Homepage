@@ -6,6 +6,10 @@ const path = require('path');
 const attachments = require('./server/attachments');
 
 const app = express();
+// 브라우저의 기본 아이콘 요청에 빈 정상 응답
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end();
+});
 
 const pool = mariadb.createPool({
   host: process.env.DB_HOST,

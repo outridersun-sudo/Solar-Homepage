@@ -307,6 +307,10 @@ async function loadDetail(id) {
 
   updateActionHelp();
   await renderAttachments(row.id);
+
+  // 관리자 점검 기록 조회·입력 화면
+  await window.loadInspections(row.id, row.status);
+
   $('detail').hidden = false;
   $('detail').scrollIntoView({ behavior: 'smooth' });
 }
@@ -386,6 +390,9 @@ $('next').addEventListener('click', () => {
 $('status').addEventListener('change', updateActionHelp);
 
 $('status-form').addEventListener('submit', event => {
+  // 이 상태 변경 폼에서 발생한 제출만 처리합니다.
+  if (event.target !== event.currentTarget) return;
+
   event.preventDefault();
 
   if (busy || !selectedId) return;
