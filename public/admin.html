@@ -98,6 +98,110 @@
     [hidden] {
       display: none !important;
     }
+
+/* 신청 상세: PC 4열 / 태블릿 2열 / 휴대폰 1열 */
+#detail-fields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px 28px;
+  margin: 20px 0 28px;
+  padding: 22px;
+  background: #f8fafc;
+  border: 1px solid #e1e8ef;
+  border-radius: 10px;
+}
+
+#detail-fields .detail-field {
+  min-width: 0;
+}
+
+#detail-fields .detail-row-start {
+  grid-column-start: 1;
+}
+
+#detail-fields .detail-field-grow {
+  grid-column: span 3;
+}
+
+#detail-fields .detail-field-wide {
+  grid-column: 1 / -1;
+}
+
+/* 신청 상세: PC 4열 / 태블릿 2열 / 휴대폰 1열 */
+#detail-fields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px 28px;
+  margin: 20px 0 28px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+/* 항목명과 내용을 묶는 영역 */
+#detail-fields .detail-field {
+  display: block;
+  min-width: 0;
+}
+
+/* 항목 묶음마다 새 줄에서 시작 */
+#detail-fields .detail-row-start {
+  grid-column-start: 1;
+}
+
+/* 고장 증상은 오른쪽 남는 공간 사용 */
+#detail-fields .detail-field-grow {
+  grid-column: span 3;
+}
+
+/* 접수 사유·처리내용은 한 행 전체 사용 */
+#detail-fields .detail-field-wide {
+  grid-column: 1 / -1;
+}
+
+/* 항목명: 윗줄에 굵게 표시 */
+#detail-fields dt {
+  display: block;
+  float: none;
+  margin: 0 0 6px;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 700;
+  color: #172b43;
+}
+
+/* 내용: 항목명 다음 줄에 표시 */
+#detail-fields dd {
+  display: block;
+  float: none;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+  font-weight: 400;
+  color: #172b43;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  #detail-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+  }
+
+  #detail-fields .detail-field-grow {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  #detail-fields {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+}
+
   </style>
 </head>
 
@@ -239,7 +343,7 @@
   </main>
 
 <script src="js/admin-inspections.js?v=20261015-2"></script>
-<script src="js/admin.js?v=20261015-inspections-2"></script>
+<script src="js/admin.js?v=20261019-detail-fix-2"></script>
 
 </body>
 </html>

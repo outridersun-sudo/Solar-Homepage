@@ -214,51 +214,98 @@ async function loadDetail(id) {
   $('detail-fields').replaceChildren();
   $('history').replaceChildren();
 
-  const labels = {
-    id: '신청 관리번호',
-    request_number: '정식 접수번호',
-    status: '현재 상태',
-    customer_name: '회사명 / 고객명',
-    contact_name: '담당자명',
-    phone: '연락처',
-    email: '이메일',
-    plant_name: '발전소명',
-    installation_region: '설치 지역',
-    product_type: '제품 구분',
-    model_name: '제품 모델',
-    serial_number: '시리얼번호',
-    fault_code: '오류코드',
-    symptoms: '고장 증상',
-    created_at: '신청일',
-    privacy_agreed_at: '동의일',
-    accepted_at: '정식 접수일시',
-    acceptance_reason: '접수 사유',
-    accepted_by: '접수자',
-    completed_at: '실제 완료일시',
-    completion_details: '처리내용',
-    completed_by: '완료자',
-    completion_recorded_at: '완료 기록 시각'
-  };
+  const detailRows = [
+    [
+      ['created_at', '신청일'],
+      ['privacy_agreed_at', '동의일'],
+      ['accepted_at', '정식 접수일시'],
+      ['accepted_by', '접수자']
+    ],
+    [
+      ['id', '신청 관리번호'],
+      ['request_number', '정식 접수번호'],
+      ['status', '현재 상태']
+    ],
+    [
+      ['customer_name', '회사명 / 고객명'],
+      ['contact_name', '담당자명'],
+      ['phone', '연락처'],
+      ['email', '이메일']
+    ],
+    [
+      ['plant_name', '발전소명'],
+      ['installation_region', '설치 지역']
+    ],
+    [
+      ['product_type', '제품 구분'],
+      ['model_name', '제품 모델'],
+      ['serial_number', '시리얼번호']
+    ],
+    [
+      ['fault_code', '오류코드'],
+      ['symptoms', '고장 증상', 'grow']
+    ],
+    [
+      ['acceptance_reason', '접수 사유', 'wide']
+    ],
+    [
+      ['completed_at', '실제 완료일시'],
+      ['completion_recorded_at', '완료 기록 시각'],
+      ['completed_by', '완료자']
+    ],
+    [
+      ['completion_details', '처리내용', 'wide']
+    ]
+  ];
 
-  for (const [key, label] of Object.entries(labels)) {
-    const dt = document.createElement('dt');
-    const dd = document.createElement('dd');
+  for (const fields of detailRows) {
+    fields.forEach(([key, label, size], index) => {
+      const field = document.createElement('div');
 
-    dt.textContent = label;
+      field.classList.add('detail-field');
 
-    if (key === 'status') {
-      dd.textContent = statusNames[row.status] || row.status;
-    } else if (key === 'request_number') {
-      dd.textContent = row.request_number || '미발급';
-    } else if (key.endsWith('_at')) {
-      dd.textContent = formatDate(row[key]);
-    } else {
-      dd.textContent = row[key] ?? '-';
-    }
+      // 항목 묶음마다 새 줄에서 시작합니다.
+      if (index === 0) {
+        field.classList.add('detail-row-start');
+      }
 
-    $('detail-fields').append(dt, dd);
+      if (size === 'wide') {
+        field.classList.add('detail-field-wide');
+      } else if (size === 'grow') {
+        field.classList.add('detail-field-grow');
+      }
+
+      const dt = document.createElement('dt');
+      const dd = document.createElement('dd');
+
+      dt.textContent = label;
+
+      if (key === 'status') {
+        dd.textContent =
+          statusNames[row.status] || row.status || '-';
+      } else if (key === 'request_number') {
+        dd.textContent = row.request_number || '미발급';
+      } else if (key.endsWith('_at')) {
+        dd.textContent = formatDate(row[key]);
+      } else {
+        const value = row[key];
+
+        dd.textContent =
+          value === null ||
+          value === undefined ||
+          value === ''
+            ? '-'
+            : String(value);
+      }
+
+      field.append(dt, dd);
+
+      $('detail-fields').append(field);
+    });
   }
 
+  renderAdminDetailFields(row);
+  
   for (const entry of row.history || []) {
     const item = document.createElement('li');
 
@@ -556,5 +603,100 @@ async function renderAttachments(requestId) {
       '첨부 조회 실패: ' + error.message;
 
     section.append(message);
+  }
+}
+
+function renderAdminDetailFields(row) {
+  const container = $('detail-fields');
+
+  // 기존에 출력한 상세 항목을 지우고 다시 구성합니다.
+  container.replaceChildren();
+
+  const groups = [
+    [
+      ['created_at', '신청일'],
+      ['privacy_agreed_at', '동의일'],
+      ['accepted_at', '정식 접수일시'],
+      ['accepted_by', '접수자']
+    ],
+    [
+      ['id', '신청 관리번호'],
+      ['request_number', '정식 접수번호'],
+      ['status', '현재 상태']
+    ],
+    [
+      ['customer_name', '회사명 / 고객명'],
+      ['contact_name', '담당자명'],
+      ['phone', '연락처'],
+      ['email', '이메일']
+    ],
+    [
+      ['plant_name', '발전소명'],
+      ['installation_region', '설치 지역']
+    ],
+    [
+      ['product_type', '제품 구분'],
+      ['model_name', '제품 모델'],
+      ['serial_number', '시리얼번호']
+    ],
+    [
+      ['fault_code', '오류코드'],
+      ['symptoms', '고장 증상', 'grow']
+    ],
+    [
+      ['acceptance_reason', '접수 사유', 'wide']
+    ],
+    [
+      ['completed_at', '실제 완료일시'],
+      ['completion_recorded_at', '완료 기록 시각'],
+      ['completed_by', '완료자']
+    ],
+    [
+      ['completion_details', '처리내용', 'wide']
+    ]
+  ];
+
+  for (const group of groups) {
+    group.forEach(([key, label, size], index) => {
+      const field = document.createElement('div');
+      field.className = 'detail-field';
+
+      if (index === 0) {
+        field.classList.add('detail-row-start');
+      }
+
+      if (size === 'wide') {
+        field.classList.add('detail-field-wide');
+      } else if (size === 'grow') {
+        field.classList.add('detail-field-grow');
+      }
+
+      const title = document.createElement('dt');
+      const content = document.createElement('dd');
+
+      title.textContent = label;
+
+      if (key === 'status') {
+        content.textContent =
+          statusNames[row.status] || row.status || '-';
+      } else if (key === 'request_number') {
+        content.textContent = row.request_number || '미발급';
+      } else if (key.endsWith('_at')) {
+        content.textContent = formatDate(row[key]);
+      } else {
+        const value = row[key];
+
+        content.textContent =
+          value === null ||
+          value === undefined ||
+          value === ''
+            ? '-'
+            : String(value);
+      }
+
+      // 항목명과 내용을 하나의 칸에 묶습니다.
+      field.append(title, content);
+      container.append(field);
+    });
   }
 }
