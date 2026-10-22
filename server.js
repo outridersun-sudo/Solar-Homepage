@@ -270,9 +270,12 @@ app.use('/api', (err, req, res, next) => {
 });
 
 
+
 if (require.main === module) {
-  app.listen(3000, '127.0.0.1', () => {
-    console.log('http://localhost:3000');
+  const PORT = Number(process.env.PORT) || 3000;
+
+  app.listen(PORT, '127.0.0.1', () => {
+    console.log(`Solar-Homepage running on port ${PORT}`);
   });
 }
 
