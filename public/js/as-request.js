@@ -53,6 +53,10 @@ function updateButtons() {
   attachments.disabled = locked || processing;
   camera.disabled = locked || processing;
   cameraButton.disabled = locked || processing;
+  form.dataset.asBusy = String(locked || processing);
+  form.dispatchEvent(new CustomEvent('as:statechange', {
+    detail: { busy: locked || processing, locked }
+  }));
 }
 
 function renderFiles() {
