@@ -24,6 +24,33 @@ img{max-width:100%;display:block}
 .nav{display:flex;gap:30px;align-items:center}
 .nav a{font-size:15px;font-weight:700;color:#334155;padding:26px 0;border-bottom:3px solid transparent}
 .nav a:hover,.nav a.active{color:var(--blue);border-bottom-color:var(--blue)}
+/* 견적문의 플로팅 메뉴 */
+.site-header .nav > a.nav-quote {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    padding: 8px 16px;
+    border: 1px solid #e0eaf2;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #08689f;
+    box-shadow: 0 4px 11px rgba(28, 65, 94, 0.13);
+    text-decoration: none;
+    transform: translateY(-1px);
+    transition: box-shadow .2s ease,
+                transform .2s ease;
+}
+
+.site-header .nav > a.nav-quote::after {
+    display: none;
+}
+
+.site-header .nav > a.nav-quote:hover,
+.site-header .nav > a.nav-quote:focus-visible {
+    box-shadow: 0 6px 15px rgba(28, 65, 94, 0.19);
+    transform: translateY(-2px);
+}
 .hero{background:linear-gradient(120deg,#0e314f 0%,#115b83 55%,#1f9a7a 100%);color:#fff;padding:95px 0 85px;overflow:hidden}
 .hero-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:48px;align-items:center}
 .eyebrow{font-size:14px;letter-spacing:2px;font-weight:800;color:#bfe7dc;margin-bottom:12px}

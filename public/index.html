@@ -89,6 +89,32 @@
   .section.section-white .cards { grid-template-columns: 1fr; }
 }
 </style>
+<style id="quote-navigation-style">
+/* 견적문의 메뉴만 가볍게 떠 보이도록 표시합니다. 기존 헤더의 선과 다른 메뉴는 변경하지 않습니다. */
+.site-header .nav > a.nav-quote {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  padding: 8px 16px;
+  border: 1px solid #e0eaf2;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #08689f;
+  box-shadow: 0 4px 11px rgba(28, 65, 94, 0.13);
+  text-decoration: none;
+  transform: translateY(-1px);
+  transition: box-shadow .2s ease, transform .2s ease;
+}
+.site-header .nav > a.nav-quote::after {
+  display: none;
+}
+.site-header .nav > a.nav-quote:hover,
+.site-header .nav > a.nav-quote:focus-visible {
+  box-shadow: 0 6px 15px rgba(28, 65, 94, 0.19);
+  transform: translateY(-2px);
+}
+</style>
 </head>
 <body>
 
@@ -102,6 +128,7 @@
       <a href="downloads.html">기술자료</a>
       <a href="as-service.html">A/S 지원</a>
       <a href="notices.html">공지사항</a>
+      <a class="nav-quote" href="quote.html">견적문의</a>
     </nav>
   </div>
 </header>
