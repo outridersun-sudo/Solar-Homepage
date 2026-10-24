@@ -1,0 +1,218 @@
+/* Desktop keeps the existing form layout; mobile uses the same input fields. */
+.as-mobile-only { display: none; }
+.as-step-panel, .as-symptom-details { display: contents; }
+
+@media (max-width: 767px) {
+  body.as-mobile {
+    background: #000;
+    color: #ededed;
+    color-scheme: dark;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  body.as-mobile > .site-header,
+  body.as-mobile > .page-hero,
+  body.as-mobile > .footer,
+  body.as-mobile .as-request-notice,
+  body.as-mobile .as-request-spacer,
+  body.as-mobile .as-desktop-heading,
+  body.as-mobile .as-desktop-actions { display: none !important; }
+  body.as-mobile .as-mobile-only { display: block; }
+  body.as-mobile [hidden] { display: none !important; }
+  body.as-mobile .as-mobile-header {
+    width: min(100% - 40px, 420px);
+    min-height: 64px;
+    margin: 0 auto;
+    border-bottom: 1px solid #1b1b1b;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .as-mobile-brand { font-size: 17px; font-weight: 500; color: #eee; }
+  .as-mobile-brand span { white-space: nowrap; }
+  .as-mobile-menu { position: relative; }
+  .as-mobile-menu summary {
+    list-style: none;
+    cursor: pointer;
+    width: 44px;
+    min-height: 44px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    color: #bcbcbc;
+  }
+  .as-mobile-menu summary::-webkit-details-marker { display: none; }
+  .as-mobile-menu nav {
+    position: absolute;
+    top: 46px;
+    right: 0;
+    z-index: 110;
+    width: 150px;
+    border: 1px solid #454545;
+    border-radius: 10px;
+    padding: 5px;
+    background: #202020;
+    box-shadow: 0 8px 24px #0008;
+  }
+  .as-mobile-menu nav a { display: block; padding: 12px; font-size: 14px; }
+  .as-request-section { padding: 24px 0 30px; }
+  body.as-mobile .as-request-section > .container { width: min(100% - 40px, 420px); }
+  body.as-mobile .form-card {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+  body.as-mobile .as-step-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  #as-step-title { font-size: 16px; font-weight: 500; line-height: 1.5; }
+  #as-step-title:focus { outline: none; }
+  #as-step-count { font-size: 13px; color: #c3c3c3; white-space: nowrap; }
+  body.as-mobile .form-grid { display: block; }
+  body.as-mobile .as-step-panel { display: flex; flex-direction: column; gap: 16px; }
+  body.as-mobile .as-symptom-picker {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .as-symptom-option {
+    appearance: none;
+    min-width: 0;
+    min-height: 80px;
+    padding: 12px 8px;
+    border: 1px solid #565656;
+    border-radius: 13px;
+    background: #303030;
+    color: #cdcdcd;
+    font: inherit;
+    font-size: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .as-symptom-option[aria-pressed="true"] {
+    border-color: #00b2ef;
+    background: #000f18;
+    color: #f5f5f5;
+    font-weight: 700;
+  }
+  .as-symptom-option[aria-pressed="true"] svg { color: #2387ff; }
+  body.as-mobile .form-group label { color: #dedede; font-size: 14px; }
+  body.as-mobile .form-control {
+    min-height: 48px;
+    border-color: #515151;
+    background: #191919;
+    color: #f2f2f2;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+  body.as-mobile .form-control::placeholder { color: #9b9b9b; }
+  body.as-mobile textarea.form-control { min-height: 120px; }
+  body.as-mobile .form-help { color: #b3b3b3; font-size: 13px; }
+  body.as-mobile .notice-box {
+    background: #171717;
+    color: #c7c7c7;
+    border-left-color: #555;
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+  body.as-mobile #privacy_agreed { width: 20px; height: 20px; vertical-align: middle; margin-right: 6px; accent-color: #149ced; }
+  body.as-mobile .as-details-toggle {
+    padding: 4px 0;
+    background: transparent;
+    border: 0;
+    font: inherit;
+    font-size: 13px;
+    color: #bdbdbd;
+    text-align: left;
+    min-height: 40px;
+    cursor: pointer;
+  }
+  body.as-mobile .as-details-toggle span { color: #aaa; }
+  body.as-mobile .as-symptom-details { display: flex; flex-direction: column; gap: 16px; }
+  body.as-mobile #request-result { font-size: 14px; color: #e9e9e9; margin-top: 12px; overflow-wrap: anywhere; }
+  body.as-mobile #request-result:empty { display: none; }
+  body.as-mobile .as-mobile-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-top: 14px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .as-mobile-actions .as-next,
+  .as-mobile-actions button[type="submit"] {
+    order: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 16px;
+    border: 1px solid #eee;
+    border-radius: 999px;
+    background: #eee;
+    color: #171717;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .as-back {
+    order: 2;
+    min-height: 44px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #bebebe;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  body.as-mobile button:disabled { opacity: .5; cursor: default; }
+  body.as-mobile button:focus-visible,
+  body.as-mobile a:focus-visible,
+  body.as-mobile summary:focus-visible,
+  body.as-mobile input:focus-visible,
+  body.as-mobile textarea:focus-visible,
+  body.as-mobile select:focus-visible { outline: 2px solid #42bdff; outline-offset: 3px; }
+  body.as-mobile .attachment-item { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 10px 0; border-bottom: 1px solid #333; }
+  body.as-mobile .attachment-item img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; }
+  body.as-mobile .attachment-item span { min-width: 0; flex: 1; overflow-wrap: anywhere; font-size: 13px; }
+  body.as-mobile .attachment-item button,
+  body.as-mobile .camera-button { min-height: 44px; border: 1px solid #555; border-radius: 9px; padding: 8px 14px; font: inherit; background: #292929; color: #eee; }
+}
+
+/* A/S 신청: PC 기본 배치 및 휴대폰 전용 요소의 초기 숨김 */
+.as-mobile-only {
+  display: none;
+}
+
+.as-step-panel,
+.as-symptom-details {
+  display: contents;
+}
+
+/* JS에서 숨긴 단계·입력영역이 display 규칙에 덮이지 않도록 유지 */
+#as-request-form [hidden] {
+  display: none !important;
+}
+
+@media (min-width: 768px) {
+  body > .as-mobile-header,
+  #as-request-form .as-mobile-only {
+    display: none !important;
+  }
+}
