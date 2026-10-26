@@ -827,6 +827,50 @@ body:has(.quote-page)>.footer{margin-top:0}
   const today = new Date();
   $('deliveryDate').min = [today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
   addRow('module');addRow('inverter');applyMode();
+  // 계산기에서 같은 탭으로 이동한 경우에만 1회 자동 입력합니다.
+  if (new URLSearchParams(location.search).get('from') === 'calculator') {
+    try {
+      const raw = sessionStorage.getItem('solar-calculator-quote-v1');
+      const draft = raw ? JSON.parse(raw) : null;
+      if (!draft || draft.version !== 1 || !Number.isFinite(draft.createdAt) ||
+          Date.now() - draft.createdAt > 1800000 || draft.createdAt > Date.now() + 60000 ||
+          !Array.isArray(draft.products) || !draft.products.length || draft.products.length > 30 ||
+          typeof draft.request !== 'string' || draft.request.length > 8000) {
+        throw new Error('계산기 연계 정보가 없거나 만료되었습니다. 계산기에서 다시 연결해 주세요.');
+      }
+      for (const product of draft.products) {
+        if (!product || !['module','inverter'].includes(product.kind) ||
+            typeof product.manufacturer !== 'string' || typeof product.model !== 'string' ||
+            product.model.length > 150 || !Number.isInteger(product.quantity) || product.quantity < 1 ||
+            product.quantity > 1000000 || !Number.isFinite(product.power) || product.power <= 0) {
+          throw new Error('계산기 품목 정보를 확인할 수 없습니다. 다시 계산해 주세요.');
+        }
+      }
+      products.replaceChildren();
+      form.querySelector('input[name="quoteMode"][value="both"]').checked = true;
+      for (const product of draft.products) {
+        // 견적 목록에 없는 계산기 모델도 선택한 제품명·출력으로 전달합니다.
+        const brands = catalog[product.kind];
+        if (!Object.prototype.hasOwnProperty.call(brands, product.manufacturer)) brands[product.manufacturer] = [];
+        if (!brands[product.manufacturer].some(item => item.name === product.model)) {
+          brands[product.manufacturer].push({name:product.model,power:product.power});
+        }
+        const row = addRow(product.kind);
+        field(row,'manufacturer').value = product.manufacturer;
+        updateModels(row);
+        field(row,'model').value = product.model;
+        updatePower(row);
+        field(row,'quantity').value = String(product.quantity);
+      }
+      $('requestMessage').value = draft.request;
+      applyMode();
+      message('productMessage','계산기에서 선택한 인버터·모듈을 입력했습니다. 품목과 수량을 확인하고 수정할 수 있습니다.');
+      sessionStorage.removeItem('solar-calculator-quote-v1');
+      history.replaceState(null, '', location.pathname + location.hash);
+    } catch (error) {
+      message('productMessage',error.message || '계산기 연계 정보를 불러오지 못했습니다.',true);
+    }
+  }
   document.querySelector('.site-header .nav-quote')?.setAttribute('aria-current','page');
 })();
 

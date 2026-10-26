@@ -194,3 +194,25 @@
   body.as-mobile .attachment-item button,
   body.as-mobile .camera-button { min-height: 44px; border: 1px solid #555; border-radius: 9px; padding: 8px 14px; font: inherit; background: #292929; color: #eee; }
 }
+
+/* A/S 신청: PC 기본 배치 및 휴대폰 전용 요소의 초기 숨김 */
+.as-mobile-only {
+  display: none;
+}
+
+.as-step-panel,
+.as-symptom-details {
+  display: contents;
+}
+
+/* JS에서 숨긴 단계·입력영역이 display 규칙에 덮이지 않도록 유지 */
+#as-request-form [hidden] {
+  display: none !important;
+}
+
+@media (min-width: 768px) {
+  body > .as-mobile-header,
+  #as-request-form .as-mobile-only {
+    display: none !important;
+  }
+}

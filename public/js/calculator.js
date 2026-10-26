@@ -5,202 +5,14 @@ let catalog = {};
 let INVERTERS = [];
 const $ = id => document.getElementById(id);
 
-// CAPACITY_ENGINE_START
-function capacityPlans(input) {
-  const {
-    dcKW, ratio, tolerance, voltage,
-    priority, kva350, pf350
-  } = input;
 
-  if (
-    ![dcKW, ratio, tolerance, voltage, kva350, pf350]
-      .every(Number.isFinite) ||
-    dcKW <= 0 ||
-    dcKW > 100001 ||
-    ratio < .5 ||
-    ratio > 1.5 ||
-    tolerance < 0 ||
-    tolerance > .3 ||
-    ![380, 800].includes(voltage) ||
-    ![350, 334, 300].includes(kva350) ||
-    pf350 < .8 ||
-    pf350 > 1
-  ) {
-    throw new Error(
-      '입력 범위를 확인하세요. 지원 설비용량은 최대 100,000kWp입니다.'
-    );
-  }
-
-  const targetAC = dcKW * ratio;
-
-  const make = (acKW, counts) => {
-    const rows = INVERTERS
-      .filter(inv => counts[inv.kw] > 0)
-      .map(inv => ({
-        ...inv,
-        count: counts[inv.kw],
-        unitAC: inv.kw === 350 ? kva350 * pf350 : inv.kw
-      }));
-
-    const count = rows.reduce((sum, row) => sum + row.count, 0);
-    const actualRatio = acKW / dcKW;
-    const error = Math.abs(actualRatio / ratio - 1);
-
-    return {
-      acKW,
-      count,
-      actualRatio,
-      error,
-      within: error <= tolerance + 1e-10,
-      voltage,
-      rows
-    };
-  };
-
-  const eligibleModels = input.eligibleKw
-    ? INVERTERS.filter(inv => input.eligibleKw.includes(inv.kw))
-    : INVERTERS;
-
-  const candidates = [];
-  let reconstruct;
-
-  if (voltage === 800) {
-    const unit = kva350 * pf350;
-    const near = targetAC / unit;
-    const low = targetAC * (1 - tolerance) / unit;
-    const high = targetAC * (1 + tolerance) / unit;
-
-    const counts = new Set([
-      1,
-      Math.floor(near),
-      Math.ceil(near),
-      Math.floor(dcKW / unit) + 1,
-      Math.ceil(low - 1e-10),
-      Math.floor(high + 1e-10)
-    ]);
-
-    for (const n of counts) {
-      if (
-        n >= 1 &&
-        eligibleModels.some(inv => inv.kw === 350)
-      ) {
-        candidates.push({
-          acKW: n * unit,
-          count: n,
-          n
-        });
-      }
-    }
-
-    reconstruct = item => make(item.acKW, {350: item.n});
-  } else {
-    const coins = eligibleModels
-      .filter(inv => inv.voltage === 380)
-      .sort((a, b) =>
-        priority === 'asc' ? a.kw - b.kw : b.kw - a.kw
-      );
-
-    const maxUnits = Math.ceil(
-      (Math.max(dcKW, targetAC * (1 + tolerance)) + 150) / 2
-    );
-
-    const count = new Uint32Array(maxUnits + 1);
-    const parent = new Uint8Array(maxUnits + 1);
-
-    count.fill(0xffffffff);
-    parent.fill(255);
-    count[0] = 0;
-
-    for (let u = 1; u <= maxUnits; u++) {
-      for (let j = 0; j < coins.length; j++) {
-        const previous = u - coins[j].kw / 2;
-
-        if (
-          previous >= 0 &&
-          count[previous] !== 0xffffffff &&
-          count[previous] + 1 < count[u]
-        ) {
-          count[u] = count[previous] + 1;
-          parent[u] = j;
-        }
-      }
-
-      if (count[u] !== 0xffffffff) {
-        candidates.push({
-          acKW: u * 2,
-          count: count[u],
-          u
-        });
-      }
-    }
-
-    reconstruct = item => {
-      let u = item.u;
-      const counts = {};
-
-      while (u > 0) {
-        const kw = coins[parent[u]].kw;
-        counts[kw] = (counts[kw] || 0) + 1;
-        u -= kw / 2;
-      }
-
-      return make(item.acKW, counts);
-    };
-  }
-
-  for (const item of candidates) {
-    item.error = Math.abs((item.acKW / dcKW) / ratio - 1);
-    item.within = item.error <= tolerance + 1e-10;
-  }
-
-  // 필수 조건: AC/DC > 1.00
-  // 전체 입력 모듈의 STC DC 용량을 기준으로 하며 동일값도 제외합니다.
-  const aboveUnity = candidates.filter(
-    item => item.acKW > dcKW + 1e-9
-  );
-
-  const feasible = aboveUnity.filter(item => item.within);
-
-  const best = (items, compare) => items.reduce(
-    (a, b) => !a || compare(b, a) < 0 ? b : a,
-    null
-  );
-
-  const nearCompare = (a, b) =>
-    a.error - b.error ||
-    a.count - b.count ||
-    a.acKW - b.acKW;
-
-  const a = best(
-    feasible,
-    (a, b) => a.count - b.count || nearCompare(a, b)
-  );
-
-  const b = best(aboveUnity, nearCompare);
-  const minCount = a ? a.count : 1;
-
-  const score = item =>
-    .5 * item.error / (tolerance || .1) +
-    .5 * (item.count / minCount - 1);
-
-  const c = best(
-    feasible,
-    (a, b) => score(a) - score(b) || nearCompare(a, b)
-  );
-
-  return {
-    A: a ? reconstruct(a) : null,
-    B: b ? reconstruct(b) : null,
-    C: c ? reconstruct(c) : null,
-    targetAC
-  };
-}
-// CAPACITY_ENGINE_END
 
 let currentChoice = 'B';
 let activeCard = 'B';
 let toastTimer;
 let resultState = null;
+let calculationSequence = 0;
+let pendingCalculation = null;
 
 const setText = (id, value) => {
   $(id).textContent = value;
@@ -458,6 +270,8 @@ function signature() {
 }
 
 function invalidate() {
+  calculationSequence++;
+  pendingCalculation?.abort();
   resultState = null;
 
   $('results').replaceChildren(
@@ -498,360 +312,6 @@ function invalidate() {
     'assumptionSummary',
     '온도·Vmpp 계수·후면 일사율을 변경한 뒤에는 다시 계산하세요.'
   );
-}
-
-function moduleDesignValues(module, input) {
-  const rearScale = input.rearIrradiance / 13.5;
-  const interpolate = (stc, bnpi) => stc + (bnpi - stc) * rearScale;
-
-  const ref = {
-    voc: interpolate(module.voc, module.bnpiVoc),
-    vmp: interpolate(module.vmp, module.bnpiVmp),
-    imp: interpolate(module.imp, module.bnpiImp),
-    isc: interpolate(module.isc, module.bnpiIsc),
-    power: interpolate(module.p, module.bnpi)
-  };
-
-  const betaVoc = module.betaVoc / 100;
-  const betaVmp = input.vmpCoefficient / 100;
-
-  const temperatures = [
-    input.minTemperature,
-    input.maxCellTemperature
-  ];
-
-  const maximumFactor = module.iscCoefficientUnconfirmed
-    ? 1 + Math.abs(module.alphaIsc / 100) *
-      Math.max(...temperatures.map(t => Math.abs(t - 25)))
-    : Math.max(
-        ...temperatures.map(
-          t => 1 + module.alphaIsc / 100 * (t - 25)
-        )
-      );
-
-  return {
-    ...ref,
-
-    vocCold:
-      ref.voc * (1 + betaVoc * (input.minTemperature - 25)),
-
-    vocWithMargin:
-      ref.voc *
-      (1 + betaVoc * (input.minTemperature - 25)) *
-      (1 + input.vocMargin / 100),
-
-    vmpHot:
-      ref.vmp * (1 + betaVmp * (input.maxCellTemperature - 25)),
-
-    vmpCold:
-      ref.vmp * (1 + betaVmp * (input.minTemperature - 25)),
-
-    // Imp 계수 미제공: Isc 계수로 예비 추정합니다.
-    impDesign: ref.imp * maximumFactor,
-    iscTemperature: ref.isc * maximumFactor,
-    iscDesign: ref.isc * maximumFactor * input.iscFactor,
-
-    rearScale,
-    maximumFactor
-  };
-}
-
-function preliminaryDesign(inverter, module, input) {
-  const values = moduleDesignValues(module, input);
-
-  const minSeries = Math.max(
-    1,
-    Math.ceil(
-      Math.max(inverter.mppMin, inverter.startV) /
-      values.vmpHot - 1e-10
-    )
-  );
-
-  const maxSeries = Math.min(
-    Math.floor(
-      Math.min(inverter.dcMax, module.maxV) /
-      values.vocWithMargin + 1e-10
-    ),
-    Math.floor(
-      inverter.mppMax / values.vmpCold + 1e-10
-    )
-  );
-
-  const options = [];
-
-  for (
-    let parallel = 1;
-    parallel <= inverter.portsPerMppt;
-    parallel++
-  ) {
-    const stringLimit =
-      parallel === 1 && inverter.singleStringA
-        ? inverter.singleStringA
-        : inverter.stringA;
-
-    if (
-      values.impDesign > stringLimit + 1e-10 ||
-      parallel * values.impDesign > inverter.mpptA + 1e-10 ||
-      parallel * values.iscDesign > inverter.mpptIscA + 1e-10
-    ) {
-      continue;
-    }
-
-    for (let series = minSeries; series <= maxSeries; series++) {
-      options.push({
-        series,
-        parallel,
-        modules: series * parallel
-      });
-    }
-  }
-
-  const reasons = [];
-
-  if (minSeries > maxSeries) {
-    reasons.push(
-      '온도·전압 가정에서 직렬 수 범위가 겹치지 않음'
-    );
-  }
-
-  if (minSeries <= maxSeries && !options.length) {
-    reasons.push(
-      '온도·양면·전류 여유를 반영하면 브로슈어 표기 전류 범위를 초과함'
-    );
-  }
-
-  return {
-    inverter,
-    values,
-    minSeries,
-    maxSeries,
-    options,
-    eligible: options.length > 0,
-    reasons,
-    pattern: null
-  };
-}
-
-function preparePattern(design) {
-  if (design.pattern) return design.pattern;
-
-  const options = [
-    {series: 0, parallel: 0, modules: 0},
-    ...design.options
-  ];
-
-  const maxPerMppt = Math.max(
-    ...options.map(option => option.modules)
-  );
-
-  const maxTotal = maxPerMppt * design.inverter.mppt;
-
-  let previous = new Float64Array(maxTotal + 1);
-  previous.fill(Infinity);
-  previous[0] = 0;
-
-  const choices = [];
-
-  for (let mppt = 0; mppt < design.inverter.mppt; mppt++) {
-    const next = new Float64Array(maxTotal + 1);
-    next.fill(Infinity);
-
-    const selected = new Uint8Array(maxTotal + 1);
-    selected.fill(255);
-
-    for (let total = 0; total <= maxTotal; total++) {
-      if (!Number.isFinite(previous[total])) continue;
-
-      options.forEach((option, index) => {
-        const sum = total + option.modules;
-        if (sum > maxTotal) return;
-
-        const cost =
-          previous[total] +
-          option.modules * option.modules +
-          option.parallel * .001;
-
-        if (cost < next[sum]) {
-          next[sum] = cost;
-          selected[sum] = index;
-        }
-      });
-    }
-
-    previous = next;
-    choices.push(selected);
-  }
-
-  const reachable = [];
-
-  for (let total = 0; total <= maxTotal; total++) {
-    if (Number.isFinite(previous[total])) {
-      reachable.push(total);
-    }
-  }
-
-  design.pattern = {
-    options,
-    choices,
-    reachable,
-    maxTotal
-  };
-
-  return design.pattern;
-}
-
-function mpptAllocation(design, total) {
-  const pattern = preparePattern(design);
-  const mppts = [];
-  let remaining = total;
-
-  for (let index = design.inverter.mppt - 1; index >= 0; index--) {
-    const option = pattern.options[
-      pattern.choices[index][remaining]
-    ];
-
-    if (!option) {
-      throw new Error('예비 배분 복원에 실패했습니다.');
-    }
-
-    mppts.push({
-      mppt: index + 1,
-      series: option.series,
-      parallel: option.parallel,
-      modules: option.modules
-    });
-
-    remaining -= option.modules;
-  }
-
-  return mppts.reverse();
-}
-
-function allocatePlant(plan, designs, input) {
-  const units = [];
-
-  for (const row of plan.rows) {
-    const design = designs[row.kw];
-    preparePattern(design);
-
-    for (let index = 0; index < row.count; index++) {
-      units.push({
-        kw: row.kw,
-        model: row.model,
-        voltage: row.voltage,
-        unitAC: row.unitAC,
-        modelUnit: index + 1,
-        modules: 0,
-        design
-      });
-    }
-  }
-
-  let remaining = input.moduleCount;
-  let remainingAC = plan.acKW;
-
-  for (const unit of units) {
-    const quota = remainingAC > 0
-      ? remaining * unit.unitAC / remainingAC
-      : 0;
-
-    const possible = unit.design.pattern.reachable.filter(
-      total => total <= Math.min(
-        remaining,
-        Math.floor(quota + 1e-10)
-      )
-    );
-
-    unit.modules = possible[possible.length - 1] || 0;
-    remaining -= unit.modules;
-    remainingAC -= unit.unitAC;
-  }
-
-  for (const unit of units) {
-    const possible = unit.design.pattern.reachable.filter(
-      total =>
-        total >= unit.modules &&
-        total <= unit.modules + remaining
-    );
-
-    const total = possible[possible.length - 1] ?? unit.modules;
-    remaining -= total - unit.modules;
-    unit.modules = total;
-  }
-
-  // 잔여 모듈을 2대 간 재배분합니다.
-  // 모든 조합의 전역 최적해를 보장하지는 않습니다.
-  if (remaining > 0) {
-    const limit = Math.min(units.length, 100);
-
-    outer:
-    for (let i = 0; i < limit; i++) {
-      for (let j = i + 1; j < limit; j++) {
-        const first = units[i];
-        const second = units[j];
-        const total = first.modules + second.modules;
-
-        let gain = 0;
-        let newFirst = first.modules;
-        let newSecond = second.modules;
-
-        const reachableSecond = second.design.pattern.reachable;
-
-        for (const a of first.design.pattern.reachable) {
-          const budget = total + remaining - a;
-
-          let lo = 0;
-          let hi = reachableSecond.length - 1;
-          let found = -1;
-
-          while (lo <= hi) {
-            const mid = (lo + hi) >> 1;
-
-            if (reachableSecond[mid] <= budget) {
-              found = mid;
-              lo = mid + 1;
-            } else {
-              hi = mid - 1;
-            }
-          }
-
-          if (found < 0) continue;
-
-          const b = reachableSecond[found];
-          const add = a + b - total;
-
-          if (add > gain) {
-            gain = add;
-            newFirst = a;
-            newSecond = b;
-          }
-        }
-
-        first.modules = newFirst;
-        second.modules = newSecond;
-        remaining -= gain;
-
-        if (remaining === 0) break outer;
-      }
-    }
-  }
-
-  return {
-    allocated: input.moduleCount - remaining,
-    unallocated: remaining,
-
-    units: units.map((unit, index) => ({
-      index: index + 1,
-      kw: unit.kw,
-      model: unit.model,
-      voltage: unit.voltage,
-      unitAC: unit.unitAC,
-      modelUnit: unit.modelUnit,
-      modules: unit.modules,
-      stcKW: unit.modules * input.module.p / 1000,
-      mppts: mpptAllocation(unit.design, unit.modules)
-    }))
-  };
 }
 
 const TITLES = {
@@ -979,14 +439,6 @@ function selectChoice(id) {
     node.classList.toggle('selected', selected);
   });
 
-  if (!resultState.allocations[id]) {
-    resultState.allocations[id] = allocatePlant(
-      resultState.plans[id],
-      resultState.designs,
-      resultState.input
-    );
-  }
-
   const allocation = resultState.allocations[id];
   const select = $('inverterPreview');
 
@@ -1016,7 +468,7 @@ function renderVerification() {
   const plan = resultState.plans[activeCard];
   const allocation = resultState.allocations[activeCard];
   const m = input.module;
-  const values = moduleDesignValues(m, input);
+  const values = resultState.values;
 
   const fixed = (value, digits = 3) =>
     Number(value).toLocaleString('ko-KR', {
@@ -2065,39 +1517,33 @@ function renderMppt() {
     '전체 ' + plan.count + '대 · 연결 ' +
     allocation.allocated + '장 / 미배분 ' +
     allocation.unallocated +
-    '장. 현재 선택한 1대의 그림만 표시·인쇄합니다. JSON에는 전체 배분을 저장합니다.'
+    '장. 현재 선택한 1대의 그림만 표시·인쇄합니다. 견적 연계 시 선택한 안의 제품·수량을 전달합니다.'
   );
 }
 
-function runCalculation(scroll = true) {
+async function runCalculation(scroll = true) {
+  const sequence = ++calculationSequence;
+  pendingCalculation?.abort();
+  const controller = new AbortController();
+  pendingCalculation = controller;
+  const timeout = setTimeout(() => controller.abort(), 35000);
+  $('runBtn').disabled = true;
   try {
     updateCount();
 
     const input = readInput();
-    const designs = {};
-
-    for (const inverter of INVERTERS) {
-      designs[inverter.kw] = preliminaryDesign(
-        inverter,
-        input.module,
-        input
-      );
-    }
-
-    input.eligibleKw = INVERTERS
-      .filter(inv => designs[inv.kw].eligible)
-      .map(inv => inv.kw);
-
-    const plans = capacityPlans(input);
-
-    resultState = {
-      input,
-      plans,
-      designs,
-      allocations: {},
-      signature: signature(),
-      calculatedAt: new Date().toISOString()
-    };
+    const inputSignature = signature();
+    setText('inputMessage', '서버에서 계산하고 있습니다.');
+    const response = await fetch('/api/calculator/calculate', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({...input, model: input.module.name}),
+      signal: controller.signal
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || '서버 계산에 실패했습니다.');
+    if (sequence !== calculationSequence || inputSignature !== signature()) return;
+    const {plans, designs} = data;
+    resultState = {...data, signature: inputSignature};
 
     renderResults();
     renderAssumptions();
@@ -2173,9 +1619,19 @@ function runCalculation(scroll = true) {
       });
     }
   } catch (error) {
+    if (sequence !== calculationSequence) return;
     invalidate();
-    setText('inputMessage', error.message);
-    notify(error.message);
+    const message = error.name === 'AbortError'
+      ? '계산 대기시간을 초과했습니다. 조건을 확인하고 다시 실행하세요.'
+      : error.message;
+    setText('inputMessage', message);
+    notify(message);
+  } finally {
+    clearTimeout(timeout);
+    if (pendingCalculation === controller) {
+      pendingCalculation = null;
+      $('runBtn').disabled = false;
+    }
   }
 }
 
@@ -2191,59 +1647,39 @@ function freshResult() {
   return true;
 }
 
-function downloadJSON() {
+function linkQuote() {
   if (!freshResult()) return;
-
-  const plan = resultState.plans[activeCard] || null;
-
-  const payload = {
-    type: 'calculator-acdc-preliminary-mppt-v3',
-    createdAt: resultState.calculatedAt,
-
-    ratioDefinition: 'AC kW / STC DC kWp',
-
-    selectionConstraint:
-      'AC/DC > 1.00; equality excluded; all input STC modules',
-
-    bifacialDefinition:
-      '후면/전면 일사율 %, BNPI 전면1000·후면135W/㎡에서 STC↔BNPI 선형 보간/외삽',
-
-    notice:
-      '가정에 의한 예비 연결 개념도. 설치매뉴얼·Vmpp 계수·Imp 온도보정·포트·퓨즈·DC 전력 한도·실제 현장 조건은 미확정입니다.',
-
-    input: resultState.input,
-    selectedChoice: plan ? activeCard : null,
-    selectedPlan: plan,
-    plans: resultState.plans,
-
-    selectedAllocation: plan
-      ? resultState.allocations[activeCard]
-      : null,
-
-    unresolvedIssues: unresolvedIssues(resultState.input),
-    electricalValidation: 'preliminary-unconfirmed'
+  const plan = resultState.plans[activeCard];
+  if (!plan) return notify('견적에 연결할 구성안을 선택하세요.');
+  const input = resultState.input;
+  const allocation = resultState.allocations[activeCard];
+  const draft = {
+    version: 1, createdAt: Date.now(),
+    products: [
+      {kind:'module', manufacturer:input.manufacturer, model:input.module.name,
+       power:input.module.p, quantity:input.moduleCount},
+      ...plan.rows.map(row => ({kind:'inverter', manufacturer:'Solis',
+        model:row.model, power:row.kw, quantity:row.count}))
+    ],
+    request: [
+      '[계산기 연계 · ' + TITLES[activeCard] + ']',
+      '모듈 STC 합계: ' + asNumber(input.dcKW) + 'kWp',
+      '인버터 AC 합계: ' + asNumber(plan.acKW) + 'kW / 출력: ' + input.voltage + 'V',
+      '목표 AC/DC: ' + input.ratio + ' / 선정 AC/DC: ' + plan.actualRatio.toFixed(4),
+      '목표 대비 편차: ' + (plan.error * 100).toFixed(2) + '% / 허용 편차: ' + (input.tolerance * 100) + '%',
+      plan.within ? '허용 편차 이내' : '주의: 허용 편차 초과 구성안',
+      '모듈 배분: ' + allocation.allocated + '장 / 미배분: ' + allocation.unallocated + '장',
+      '설계 최저온도: ' + input.minTemperature + '℃ / 최고 셀온도: ' + input.maxCellTemperature + '℃',
+      '후면 일사율: ' + input.rearIrradiance + '% / 방위각: ' + input.azimuth + '° / 경사: ' + input.tilt + '°',
+      '가정값 기반 예비 계산입니다. 견적 및 최종 연결 조건 확인이 필요합니다.'
+    ].join('\n')
   };
-
-  const blob = new Blob(
-    [JSON.stringify(payload, null, 2)],
-    {type: 'application/json;charset=utf-8'}
-  );
-
-  const url = URL.createObjectURL(blob);
-  const link = element('a');
-
-  link.href = url;
-  link.download = 'solar-calculator-acdc-mppt.json';
-
-  document.body.append(link);
-  link.click();
-  link.remove();
-
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-  notify(
-    '입력 가정·전체 예비 배분·미확인 항목을 JSON으로 저장했습니다.'
-  );
+  try {
+    sessionStorage.setItem('solar-calculator-quote-v1', JSON.stringify(draft));
+    location.assign('quote.html?from=calculator');
+  } catch (error) {
+    notify('견적 연결 정보를 보관하지 못했습니다. 브라우저 저장소 설정을 확인하세요.');
+  }
 }
 
 function unresolvedIssues(input) {
@@ -2536,7 +1972,7 @@ function init() {
     if (freshResult()) window.print();
   });
 
-  $('saveBtn').addEventListener('click', downloadJSON);
+  $('saveBtn').addEventListener('click', linkQuote);
 
   window.addEventListener('beforeprint', () => {
     if (
@@ -2637,13 +2073,9 @@ function validateProductData(modules, inverters) {
 }
 
 async function loadProductData() {
-  const root = new URL('./data/', document.baseURI);
-  const load = async name => {
-    const response = await fetch(new URL(name, root), {cache:'no-cache'});
-    if (!response.ok) throw new Error(name + '을 읽지 못했습니다. HTTP ' + response.status);
-    return response.json();
-  };
-  const [modules, inverters] = await Promise.all([load('modules.json'), load('inverters.json')]);
+  const response = await fetch('/api/calculator/catalog', {cache:'no-cache'});
+  if (!response.ok) throw new Error('제품 자료 API를 읽지 못했습니다. HTTP ' + response.status);
+  const {modules, inverters} = await response.json();
   validateProductData(modules, inverters);
   return {modules, inverters};
 }

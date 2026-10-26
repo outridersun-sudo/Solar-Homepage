@@ -28,6 +28,8 @@ require('./server/notices').registerPublic(app, pool);
 require('./server/downloads').registerPublic(app, pool);
 require('./server/admin')(app, pool);
 
+require('./server/calculator')(app);
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.post(
