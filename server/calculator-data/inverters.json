@@ -12,7 +12,22 @@
     "dcMax": 1500,
     "mppMin": 860,
     "mppMax": 1300,
-    "startV": 500
+    "startV": 500,
+    "stringFuseOptions": [
+      {
+        "voltageV": 1500,
+        "currentA": 25
+      },
+      {
+        "voltageV": 1500,
+        "currentA": 30
+      },
+      {
+        "voltageV": 1500,
+        "currentA": 35
+      }
+    ],
+    "stringFuseSource": "public/product-350kw.html — Fuse 사양"
   },
   {
     "kw": 150,
@@ -27,7 +42,22 @@
     "dcMax": 1000,
     "mppMin": 550,
     "mppMax": 850,
-    "startV": 180
+    "startV": 180,
+    "stringFuseOptions": [
+      {
+        "voltageV": 1500,
+        "currentA": 25
+      },
+      {
+        "voltageV": 1500,
+        "currentA": 30
+      },
+      {
+        "voltageV": 1500,
+        "currentA": 35
+      }
+    ],
+    "stringFuseSource": "public/product-150kw.html — Fuse 사양"
   },
   {
     "kw": 110,
@@ -43,7 +73,22 @@
     "dcMax": 1000,
     "mppMin": 550,
     "mppMax": 800,
-    "startV": 195
+    "startV": 195,
+    "stringFuseOptions": [
+      {
+        "voltageV": 1000,
+        "currentA": 25
+      },
+      {
+        "voltageV": 1000,
+        "currentA": 30
+      },
+      {
+        "voltageV": 1000,
+        "currentA": 32
+      }
+    ],
+    "stringFuseSource": "public/product-110kw.html — Fuse 사양"
   },
   {
     "kw": 60,
@@ -59,7 +104,22 @@
     "dcMax": 1000,
     "mppMin": 550,
     "mppMax": 800,
-    "startV": 195
+    "startV": 195,
+    "stringFuseOptions": [
+      {
+        "voltageV": 1000,
+        "currentA": 25
+      },
+      {
+        "voltageV": 1000,
+        "currentA": 30
+      },
+      {
+        "voltageV": 1000,
+        "currentA": 32
+      }
+    ],
+    "stringFuseSource": "public/product-60kw.html — Fuse 사양"
   },
   {
     "kw": 36,
@@ -74,6 +134,13 @@
     "dcMax": 1000,
     "mppMin": 480,
     "mppMax": 800,
-    "startV": 180
+    "startV": 180,
+    "stringFuseOptions": [
+      {
+        "voltageV": 1000,
+        "currentA": 30
+      }
+    ],
+    "stringFuseSource": "public/product-36kw.html — Fuse 사양"
   }
 ]

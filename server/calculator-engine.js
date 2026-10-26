@@ -248,6 +248,57 @@ function moduleDesignValues(module, input) {
   };
 }
 
+// 사용자 지정 참고 조건: 1개 스트링의 양면·온도 보정 Isc를 기준으로 한다.
+// MPPT 병렬 합산 전류 및 별도 iscFactor를 중복 적용하지 않는다.
+function selectStringFuse(inverter, module, values) {
+  const isc = values.iscTemperature;
+  const moduleLimitA = module.maxSeriesFuse;
+  const minimumA = isc * 1.5;
+  const maximumA = isc * 2.4;
+  const base = {
+    basis: 'iscTemperature', isc, minimumA, maximumA, moduleLimitA,
+    productModel: inverter.model || null, selectionLabel: null,
+    multiplierMin: 1.5, multiplierMax: 2.4,
+    candidates: [], selected: null, status: 'unconfirmed',
+    reason: 'MISSING_PRODUCT_DATA'
+  };
+  const positive = value => typeof value === 'number' && Number.isFinite(value) && value > 0;
+  if (!positive(isc) || !positive(moduleLimitA)) return base;
+
+  const options = inverter.stringFuseOptions;
+  if (!Array.isArray(options) || !options.length || options.some(option =>
+    !option || !positive(option.currentA) || !positive(option.voltageV)
+  )) return base;
+
+  const epsilon = 1e-9;
+  const candidates = options.map(option => {
+    const belowRange = option.currentA < minimumA - epsilon;
+    const aboveRange = option.currentA > maximumA + epsilon;
+    const moduleLimitExceeded = option.currentA > moduleLimitA + epsilon;
+    return {
+      currentA: option.currentA, voltageV: option.voltageV,
+      rangeStatus: belowRange ? 'below' : aboveRange ? 'above' : 'within',
+      moduleLimitExceeded,
+      eligible: !belowRange && !aboveRange && !moduleLimitExceeded
+    };
+  }).sort((a, b) => a.currentA - b.currentA || a.voltageV - b.voltageV);
+  const selected = candidates.find(option => option.eligible) || null;
+  const reason = selected ? 'SELECTED'
+    : minimumA > moduleLimitA + epsilon ? 'MODULE_LIMIT_BELOW_RANGE'
+    : candidates.some(option => option.rangeStatus === 'within')
+      ? 'NO_CANDIDATE_WITHIN_MODULE_LIMIT'
+      : 'NO_CANDIDATE_IN_RANGE';
+  return {
+    ...base, candidates, selected,
+    // 사용자 요청 표시명. 실제 제조사 모델이나 제품 카탈로그 키는 변경하지 않는다.
+    selectionLabel: selected && typeof inverter.model === 'string'
+      ? inverter.model.replace(/-K\d+(?:A)?$/, '') + '-K' + selected.currentA + 'A'
+      : null,
+    status: selected ? 'selected' : 'unavailable', reason
+  };
+}
+
+
 function preliminaryDesign(inverter, module, input) {
   const values = moduleDesignValues(module, input);
 
@@ -315,6 +366,7 @@ function preliminaryDesign(inverter, module, input) {
   return {
     inverter,
     values,
+    fuseReview: selectStringFuse(inverter, module, values),
     minSeries,
     maxSeries,
     options,
@@ -607,7 +659,7 @@ function calculate(body) {
   return {input, plans, designs:visibleDesigns, allocations,
     values:moduleDesignValues(input.module, input), calculatedAt:new Date().toISOString()};
 }
-module.exports = {calculate, normalizeInput, catalog, INVERTERS};
+module.exports = {calculate, normalizeInput, catalog, INVERTERS, selectStringFuse};
 
 const {isMainThread, parentPort, workerData} = require('node:worker_threads');
 if (!isMainThread && workerData?.calculatorJob) {

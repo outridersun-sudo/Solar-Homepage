@@ -23,6 +23,7 @@ const pool = mariadb.createPool({
 const security = require('./server/security')(app, pool);
 
 app.use(express.json({ limit: '100kb' }));
+require('./server/quote-mail')(app, security);
 
 require('./server/notices').registerPublic(app, pool);
 require('./server/downloads').registerPublic(app, pool);

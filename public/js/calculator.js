@@ -286,6 +286,8 @@ function invalidate() {
   $('unconfirmedList').replaceChildren();
   $('inverterPreview').replaceChildren();
   $('inverterPreview').disabled = true;
+  $('fuseReview').hidden = true;
+  $('fuseReviewBody').replaceChildren();
 
   $('mpptGrid').replaceChildren(
     element(
@@ -444,14 +446,17 @@ function selectChoice(id) {
 
   select.replaceChildren(
     ...allocation.units.map((unit, index) => {
+      const review = resultState.designs[unit.kw].fuseReview;
       const op = element(
         'option',
-        '#' + unit.index + ' · ' +
-        unit.model + ' · ' +
+        '#' + unit.index + ' · ' + unit.kw + 'kW · ' +
+        inverterSelectionLabel(unit, review) + ' · ' +
         unit.modules + '장'
       );
 
       op.value = String(index);
+      op.title = '제품 기본 모델: ' + unit.model +
+        (review?.selected ? ' / 선정 퓨즈 ' + review.selected.currentA + 'A' : '');
       return op;
     })
   );
@@ -1428,6 +1433,67 @@ function renderVerification() {
   }
 }
 
+function inverterSelectionLabel(unit, review) {
+  if (!unit.modules) return unit.model + ' · 미사용';
+  if (review?.selected && review.selectionLabel) return review.selectionLabel + ' · 선정 퓨즈 ' + review.selected.currentA + 'A';
+  return unit.model + (review?.status === 'unavailable' ? ' · 퓨즈 선정 불가' : ' · 퓨즈 확인 필요');
+}
+
+function renderFuseReview(design, unit) {
+  const panel = $('fuseReview');
+  const body = $('fuseReviewBody');
+  panel.hidden = false;
+  body.replaceChildren();
+  const review = design.fuseReview;
+  const used = unit.modules > 0;
+  const state = !used ? 'unused' : review?.status || 'unconfirmed';
+  panel.dataset.state = state;
+  setText('fuseReviewContext', '#' + unit.index + ' · 제품 기본 모델 ' + unit.model +
+    (used && review?.selectionLabel ? ' / 선정 표기 ' + review.selectionLabel : '') + ' · 1개 스트링 기준');
+
+  const amps = value => Number.isFinite(value) ? value.toFixed(3) + ' A' : '미확인';
+  const rating = option => option.voltageV.toLocaleString('ko-KR') + ' V / ' + asNumber(option.currentA) + ' A';
+  const add = (label, text, className) => {
+    const row = element('tr');
+    const heading = element('th', label);
+    heading.scope = 'row';
+    const cell = element('td', text, className);
+    row.append(heading, cell);
+    body.append(row);
+  };
+
+  add('선정 조건', review
+    ? '양면·온도 보정 Isc ' + amps(review.isc) + ' × 1.5~2.4 = ' +
+      amps(review.minimumA) + '~' + amps(review.maximumA) + ' — 참고 검토'
+    : '서버의 퓨즈 선정 자료가 없습니다. 수정된 서버 파일을 적용하고 재시작하세요.');
+  add('적용 퓨즈 정격', !used ? '미사용 인버터 — 적용 대상 없음'
+    : review?.selected ? rating(review.selected) + ' · 조건을 만족하는 최소 정격 자동 선정'
+    : state === 'unconfirmed' ? '제품 자료 확인 필요' : '선정 불가 — 조건을 만족하는 제품 정격 없음');
+  add('모듈 허용 최대 정격', amps(review?.moduleLimitA) + ' · 모듈 최대 직렬 퓨즈 정격');
+
+  const reason = !used ? '미사용 인버터로 퓨즈 적용 판단 대상이 아닙니다.'
+    : state === 'selected' ? '선정 범위 포함 / 모듈 허용 정격 이하'
+    : state === 'unconfirmed' ? '등록된 퓨즈 정격 또는 서버 계산 결과를 확인하세요.'
+    : review.reason === 'MODULE_LIMIT_BELOW_RANGE' ? '선정 하한이 모듈 허용 최대 정격을 초과합니다.'
+    : review.reason === 'NO_CANDIDATE_WITHIN_MODULE_LIMIT' ? '선정 범위의 제품 정격이 모두 모듈 허용 최대 정격을 초과합니다.'
+    : '선정 범위에 들어오는 인버터 제품 정격이 없습니다.';
+  add('검토 결과', reason, 'fuse-result');
+
+  const options = review?.candidates?.map(option => {
+    const details = [];
+    if (option.rangeStatus === 'below') details.push('선정 하한 미달');
+    if (option.rangeStatus === 'above') details.push('선정 상한 초과');
+    if (option.moduleLimitExceeded) details.push('모듈 허용 정격 초과');
+    if (option.eligible) details.push(option.currentA === review.selected?.currentA &&
+      option.voltageV === review.selected?.voltageV ? '자동 선정' : '조건 충족');
+    return rating(option) + ' (' + details.join(', ') + ')';
+  });
+  setText('fuseCandidateSummary', options?.length
+    ? '제품 자료 정격: ' + options.join(' / ')
+    : '인버터 제품 자료의 퓨즈 정격이 등록되지 않았습니다.');
+}
+
+
 function renderMppt() {
   if (!resultState || !resultState.plans[activeCard]) return;
 
@@ -1504,9 +1570,11 @@ function renderMppt() {
     grid.append(card);
   }
 
+  renderFuseReview(design, unit);
+
   setText(
     'mpptInfo',
-    '#' + unit.index + ' ' + unit.model +
+    '#' + unit.index + ' ' + inverterSelectionLabel(unit, design.fuseReview) +
     ' / ' + unit.modules + '장 / DC ' +
     asNumber(unit.stcKW) + 'kWp / AC ' +
     asNumber(unit.unitAC) + 'kW'
@@ -1560,6 +1628,8 @@ async function runCalculation(scroll = true) {
       $('verifyBody').replaceChildren();
       $('inverterPreview').replaceChildren();
       $('inverterPreview').disabled = true;
+      $('fuseReview').hidden = true;
+      $('fuseReviewBody').replaceChildren();
 
       $('mpptGrid').replaceChildren(
         element(
@@ -1658,8 +1728,18 @@ function linkQuote() {
     products: [
       {kind:'module', manufacturer:input.manufacturer, model:input.module.name,
        power:input.module.p, quantity:input.moduleCount},
-      ...plan.rows.map(row => ({kind:'inverter', manufacturer:'Solis',
-        model:row.model, power:row.kw, quantity:row.count}))
+      ...plan.rows.map(row => {
+        const review = resultState.designs[row.kw].fuseReview;
+        const used = allocation.units.some(unit => unit.kw === row.kw && unit.modules > 0);
+        return {
+          kind:'inverter', manufacturer:'Solis', model:row.model,
+          power:row.kw, quantity:row.count,
+          selectionStatus: used ? review?.status || 'unconfirmed' : 'unused',
+          selectedModelLabel: used && review?.selected ? review.selectionLabel : null,
+          selectedFuseA: used && review?.selected ? review.selected.currentA : null,
+          selectedFuseV: used && review?.selected ? review.selected.voltageV : null
+        };
+      })
     ],
     request: [
       '[계산기 연계 · ' + TITLES[activeCard] + ']',
@@ -1671,6 +1751,18 @@ function linkQuote() {
       '모듈 배분: ' + allocation.allocated + '장 / 미배분: ' + allocation.unallocated + '장',
       '설계 최저온도: ' + input.minTemperature + '℃ / 최고 셀온도: ' + input.maxCellTemperature + '℃',
       '후면 일사율: ' + input.rearIrradiance + '% / 방위각: ' + input.azimuth + '° / 경사: ' + input.tilt + '°',
+      ...plan.rows.map(row => {
+        const review = resultState.designs[row.kw].fuseReview;
+        const used = allocation.units.some(unit => unit.kw === row.kw && unit.modules > 0);
+        if (!used) return '스트링 퓨즈 참고 선정 [' + row.model + ']: 연결 모듈 없음';
+        return '스트링 과전류 보호장치 정격 선정 조건 [' + (review?.selectionLabel || row.model) + ']: ' +
+          (review?.selectionLabel ? '제품 기본 모델 ' + row.model + ' / ' : '') +
+          (review ? '양면·온도 보정 Isc ' + review.isc.toFixed(3) + 'A × 1.5~2.4 / ' : '') +
+          (review?.selected
+            ? '자동 선정 ' + review.selected.voltageV + 'V / ' + review.selected.currentA + 'A'
+            : review?.status === 'unavailable' ? '선정 불가' : '자료 확인 필요') +
+          (review ? ' / 모듈 최대 직렬 퓨즈 ' + review.moduleLimitA + 'A' : '') + ' · 참고 검토';
+      }),
       '가정값 기반 예비 계산입니다. 견적 및 최종 연결 조건 확인이 필요합니다.'
     ].join('\n')
   };

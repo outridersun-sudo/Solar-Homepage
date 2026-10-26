@@ -384,6 +384,7 @@ select.q-control{padding-right:28px;text-overflow:ellipsis}
 .q-check{display:inline-flex;gap:9px;align-items:center;font-size:14px;font-weight:600;cursor:pointer;color:#2c4660;line-height:1.6}
 .q-check input{width:18px;height:18px;flex:0 0 18px;accent-color:var(--q-teal);margin:0}
 .q-help{font-size:12px;line-height:1.7;color:#7b8da0;margin-top:5px}
+.q-calculator-spec{grid-column:1/-1;margin:0;padding:8px 10px;border-radius:5px;background:#eef6ff;color:#365d86;font-size:12px;line-height:1.7;overflow-wrap:anywhere;min-width:0}
 .q-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:9px 17px;border:1px solid #1595a9;border-radius:6px;background:#fff;color:#047b91;font-size:14px;font-weight:700;line-height:1.4;text-decoration:none;white-space:nowrap}
 .q-button:hover{background:#f0fafb}
 .q-button:disabled{opacity:.5;cursor:default}
@@ -488,7 +489,7 @@ body:has(.quote-page)>.footer{margin-top:0}
         <div class="q-fields q-delivery-fields">
           <label class="q-field" for="deliveryRegion"><span class="q-field-label">납품 지역</span><input class="q-control" id="deliveryRegion" name="deliveryRegion" type="text" maxlength="150" autocomplete="address-level2" placeholder="시·군·구 입력"></label>
           <label class="q-field" for="deliveryDate"><span class="q-field-label">희망 납기일</span><input class="q-control" id="deliveryDate" name="deliveryDate" type="date"></label>
-          <label class="q-field q-wide" for="requestMessage"><span class="q-field-label">추가 요청사항</span><textarea class="q-control" id="requestMessage" name="requestMessage" maxlength="2000" placeholder="설치 예정 용량, 희망 제품, 분할 납품 등 필요한 내용을 작성해 주세요."></textarea></label>
+          <label class="q-field q-wide" for="requestMessage"><span class="q-field-label">추가 요청사항</span><textarea class="q-control" id="requestMessage" name="requestMessage" maxlength="8000" placeholder="설치 예정 용량, 희망 제품, 분할 납품 등 필요한 내용을 작성해 주세요."></textarea></label>
         </div>
         <div class="q-attachment-line">
           <button class="q-button" type="button" id="chooseFiles" aria-describedby="attachmentHelp" disabled><svg class="q-attachment-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 12 7-7a4 4 0 0 1 6 6L10 22a6 6 0 0 1-8-8L14 2M7 16l9-9a1.5 1.5 0 0 1 2 2l-9 9a3 3 0 0 1-4-4l9-9"/></svg>파일 첨부</button>
@@ -566,6 +567,7 @@ body:has(.quote-page)>.footer{margin-top:0}
   let files = [];
   let submitting = false;
   let requestState = null;
+  let quoteSource = 'direct';
   const allRows = () => [...products.querySelectorAll('.q-product-row')];
   const visibleRows = () => allRows().filter(row => !row.hidden);
   const mode = () => form.querySelector('input[name="quoteMode"]:checked').value;
@@ -603,6 +605,40 @@ body:has(.quote-page)>.footer{margin-top:0}
     const entry = (catalog[kind][manufacturer] || []).find(item => item.name === field(row, 'model').value);
     field(row, 'power').value = entry ? String(entry.power) : '';
     updateRecommendation(row);
+    updateCalculatorSelection(row, entry);
+  }
+
+  function updateCalculatorSelection(row, entry) {
+    const selection = row.calculatorSelection;
+    const model = field(row, 'model');
+    let note = row.querySelector('.q-calculator-spec');
+    if (!selection || !entry || selection.model !== entry.name ||
+        field(row, 'kind').value !== 'inverter' ||
+        field(row, 'manufacturer').value !== selection.manufacturer) {
+      if (selection) {
+        row.calculatorSelection = null;
+        const items = catalog[field(row,'kind').value][field(row,'manufacturer').value] || [];
+        const unit = field(row,'kind').value === 'module' ? 'W' : 'kW';
+        for (const option of model.options) {
+          const item = items.find(item => item.name === option.value);
+          if (item) option.textContent = item.name + ' · ' + item.power + unit;
+        }
+      }
+      note?.remove();
+      return;
+    }
+    const suffix = selection.status === 'selected'
+      ? '선정 퓨즈 ' + selection.currentA + 'A'
+      : selection.status === 'unavailable' ? '퓨즈 선정 불가'
+      : selection.status === 'unused' ? '연결 모듈 없음' : '퓨즈 확인 필요';
+    model.selectedOptions[0].textContent = (selection.label || entry.name) + ' · ' + entry.power + 'kW · ' + suffix;
+    if (!note) {
+      note = textNode('p', '', 'q-calculator-spec');
+      row.append(note);
+    }
+    note.textContent = selection.status === 'selected'
+      ? '선정 표기: ' + selection.label + ' / 퓨즈 ' + selection.currentA + 'A · ' + selection.voltageV + 'V / 제품 기본 모델: ' + selection.model
+      : '제품 기본 모델: ' + selection.model + ' / ' + suffix;
   }
 
   function updateModels(row) {
@@ -701,11 +737,18 @@ body:has(.quote-page)>.footer{margin-top:0}
 
   function collectQuote() {
     return {
+      source: quoteSource,
       recommendation: recommend.checked,
       products: visibleRows().map(row => ({
         kind:field(row,'kind').value,
         manufacturer:field(row,'manufacturer').value,
         model:field(row,'model').value,
+        ...(row.calculatorSelection ? {
+          selectionStatus: row.calculatorSelection.status,
+          selectedModelLabel: row.calculatorSelection.label,
+          selectedFuseA: row.calculatorSelection.currentA,
+          selectedFuseV: row.calculatorSelection.voltageV
+        } : {}),
         power:field(row,'power').value === '' ? null : Number(field(row,'power').value),
         quantity:field(row,'quantity').value === '' ? null : Number(field(row,'quantity').value)
       })).filter(product => product.model || product.power !== null || product.quantity !== null || (product.kind === 'module' && product.manufacturer)),
@@ -845,6 +888,18 @@ body:has(.quote-page)>.footer{margin-top:0}
             product.quantity > 1000000 || !Number.isFinite(product.power) || product.power <= 0) {
           throw new Error('계산기 품목 정보를 확인할 수 없습니다. 다시 계산해 주세요.');
         }
+        if (product.selectionStatus !== undefined && product.kind === 'inverter') {
+          if (!['selected','unavailable','unconfirmed','unused'].includes(product.selectionStatus)) {
+            throw new Error('계산기 퓨즈 선정 정보를 확인할 수 없습니다. 다시 계산해 주세요.');
+          }
+          if (product.selectionStatus === 'selected' &&
+              (!Number.isFinite(product.selectedFuseA) || product.selectedFuseA <= 0 || product.selectedFuseA > 1000 ||
+               !Number.isFinite(product.selectedFuseV) || product.selectedFuseV <= 0 || product.selectedFuseV > 3000 ||
+               typeof product.selectedModelLabel !== 'string' || product.selectedModelLabel.length > 180 ||
+               product.selectedModelLabel !== product.model.replace(/-K\d+(?:A)?$/, '') + '-K' + product.selectedFuseA + 'A')) {
+            throw new Error('계산기 퓨즈 선정 표기를 확인할 수 없습니다. 다시 계산해 주세요.');
+          }
+        }
       }
       products.replaceChildren();
       form.querySelector('input[name="quoteMode"][value="both"]').checked = true;
@@ -859,12 +914,22 @@ body:has(.quote-page)>.footer{margin-top:0}
         field(row,'manufacturer').value = product.manufacturer;
         updateModels(row);
         field(row,'model').value = product.model;
+        if (product.kind === 'inverter' && product.selectionStatus) {
+          row.calculatorSelection = {
+            model: product.model, manufacturer: product.manufacturer,
+            status: product.selectionStatus,
+            label: product.selectionStatus === 'selected' ? product.selectedModelLabel : null,
+            currentA: product.selectionStatus === 'selected' ? product.selectedFuseA : null,
+            voltageV: product.selectionStatus === 'selected' ? product.selectedFuseV : null
+          };
+        }
         updatePower(row);
         field(row,'quantity').value = String(product.quantity);
       }
       $('requestMessage').value = draft.request;
+      quoteSource = 'calculator';
       applyMode();
-      message('productMessage','계산기에서 선택한 인버터·모듈을 입력했습니다. 품목과 수량을 확인하고 수정할 수 있습니다.');
+      message('productMessage','계산기에서 선택한 인버터·모듈과 퓨즈 정격을 입력했습니다. -K25A 등의 이름은 계산기 선정 표기이며 제품 기본 모델은 품목 하단에 함께 표시합니다.');
       sessionStorage.removeItem('solar-calculator-quote-v1');
       history.replaceState(null, '', location.pathname + location.hash);
     } catch (error) {
