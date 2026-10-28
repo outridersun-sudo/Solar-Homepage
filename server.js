@@ -4,6 +4,7 @@ const express = require('express');
 const mariadb = require('mariadb');
 const path = require('path');
 const attachments = require('./server/attachments');
+const serialRules = require('./server/serial-rules');
 
 const app = express();
 // 브라우저의 기본 아이콘 요청에 빈 정상 응답
@@ -108,6 +109,15 @@ app.post(
         .includes(data.product_type)
     ) {
       return reject('제품 구분을 확인해 주세요.');
+    }
+
+    // Solis inverter S/N format check. RTU/other product formats are unchanged.
+    if (data.product_type === '태양광 인버터') {
+      const serialReview = serialRules.validate(data.serial_number);
+      if (!serialReview.valid) {
+        return reject('시리얼 번호를 확인해 주세요.\n' + serialReview.message);
+      }
+      data.serial_number = serialReview.serial;
     }
 
     if (
@@ -283,3 +293,4 @@ if (require.main === module) {
 }
 
 module.exports = app;
+

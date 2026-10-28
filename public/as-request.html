@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>A/S 접수 요청 | 천일테크윈</title>
-  <link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/as-request-mobile.css"><style id="quote-navigation-style">
+  
+<style id="quote-navigation-style">
 /* 견적문의 메뉴만 가볍게 떠 보이도록 표시합니다. 기존 헤더의 선과 다른 메뉴는 변경하지 않습니다. */
 .site-header .nav > a.nav-quote {
   display: inline-flex;
@@ -29,6 +29,426 @@
 .site-header .nav > a.nav-quote:focus-visible {
   box-shadow: 0 6px 15px rgba(28, 65, 94, 0.19);
   transform: translateY(-2px);
+}
+</style>
+<style id="as-base-styles">
+
+:root{
+  --navy:#0f2740;
+  --blue:#1367a8;
+  --sky:#eef6fb;
+  --green:#1b9b78;
+  --text:#1f2937;
+  --muted:#6b7280;
+  --line:#e5e7eb;
+  --white:#ffffff;
+  --bg:#f6f8fb;
+  --shadow:0 10px 30px rgba(15,39,64,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"Malgun Gothic","Noto Sans KR",Arial,sans-serif;color:var(--text);background:var(--bg);line-height:1.6}
+a{text-decoration:none;color:inherit}
+img{max-width:100%;display:block}
+.container{width:min(1180px,calc(100% - 40px));margin:auto}
+.site-header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.header-inner{height:74px;display:flex;align-items:center;justify-content:space-between}
+.brand{font-size:24px;font-weight:800;color:var(--navy);letter-spacing:.3px}
+.brand span{color:var(--green)}
+.nav{display:flex;gap:30px;align-items:center}
+.nav a{font-size:15px;font-weight:700;color:#334155;padding:26px 0;border-bottom:3px solid transparent}
+.nav a:hover,.nav a.active{color:var(--blue);border-bottom-color:var(--blue)}
+/* 견적문의 플로팅 메뉴 */
+.site-header .nav > a.nav-quote {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    padding: 8px 16px;
+    border: 1px solid #e0eaf2;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #08689f;
+    box-shadow: 0 4px 11px rgba(28, 65, 94, 0.13);
+    text-decoration: none;
+    transform: translateY(-1px);
+    transition: box-shadow .2s ease,
+                transform .2s ease;
+}
+
+.site-header .nav > a.nav-quote::after {
+    display: none;
+}
+
+.site-header .nav > a.nav-quote:hover,
+.site-header .nav > a.nav-quote:focus-visible {
+    box-shadow: 0 6px 15px rgba(28, 65, 94, 0.19);
+    transform: translateY(-2px);
+}
+.hero{background:linear-gradient(120deg,#0e314f 0%,#115b83 55%,#1f9a7a 100%);color:#fff;padding:95px 0 85px;overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:48px;align-items:center}
+.eyebrow{font-size:14px;letter-spacing:2px;font-weight:800;color:#bfe7dc;margin-bottom:12px}
+.hero h1{font-size:48px;line-height:1.2;margin-bottom:20px;letter-spacing:-1.2px}
+.hero p{font-size:19px;color:#e5f1f7;max-width:720px}
+.hero-actions{display:flex;gap:12px;margin-top:30px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 22px;border-radius:8px;font-weight:800;border:1px solid transparent;transition:.2s}
+.btn-primary{background:#fff;color:var(--navy)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 25px rgba(0,0,0,.12)}
+.btn-outline{border-color:rgba(255,255,255,.55);color:#fff}
+.btn-outline:hover{background:rgba(255,255,255,.1)}
+.hero-panel{background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.2);border-radius:18px;padding:26px}
+.hero-stat{padding:18px 0;border-bottom:1px solid rgba(255,255,255,.16)}
+.hero-stat:last-child{border-bottom:0}
+.hero-stat b{display:block;font-size:26px}
+.hero-stat span{font-size:13px;color:#d9edf5}
+.section{padding:76px 0}
+.section-white{background:#fff}
+.section-head{text-align:center;margin-bottom:38px}
+.section-head .kicker{color:var(--blue);font-size:13px;font-weight:900;letter-spacing:1.5px}
+.section-head h2{font-size:34px;margin-top:6px;color:var(--navy);letter-spacing:-.8px}
+.section-head p{margin-top:10px;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+.card-media{height:190px;background:linear-gradient(135deg,#e6f2fa,#dff3ec);display:flex;align-items:center;justify-content:center;color:#5a7184;font-weight:800;letter-spacing:.3px}
+.card-body{padding:24px}
+.badge{display:inline-block;font-size:12px;padding:4px 9px;border-radius:999px;background:#e9f4fb;color:var(--blue);font-weight:800;margin-bottom:10px}
+.card h3{font-size:21px;color:var(--navy);margin-bottom:9px}
+.card p{font-size:14px;color:var(--muted)}
+.card-link{display:inline-block;margin-top:18px;color:var(--blue);font-weight:800;font-size:14px}
+.feature-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.feature{background:#fff;border:1px solid var(--line);border-radius:12px;padding:22px}
+.feature strong{display:block;color:var(--navy);font-size:17px;margin-bottom:6px}
+.feature span{font-size:13px;color:var(--muted)}
+.page-hero{background:linear-gradient(120deg,#102c45,#17678f);color:#fff;padding:62px 0}
+.page-hero h1{font-size:38px;margin-bottom:8px}
+.page-hero p{color:#dcecf5}
+.breadcrumb{font-size:13px;color:#bdd5e3;margin-bottom:12px}
+.toolbar{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-bottom:24px}
+.search{flex:1;max-width:420px;border:1px solid var(--line);background:#fff;border-radius:9px;padding:11px 14px;font-size:14px}
+.select{border:1px solid var(--line);background:#fff;border-radius:9px;padding:11px 14px;font-size:14px}
+.table-wrap{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse}
+th{background:#f0f5f9;color:#334155;text-align:left;font-size:13px;padding:14px 16px}
+td{padding:16px;border-top:1px solid var(--line);font-size:14px}
+.download-btn{display:inline-block;background:var(--blue);color:#fff;padding:7px 12px;border-radius:7px;font-size:13px;font-weight:800}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:start}
+.product-visual{height:420px;background:linear-gradient(145deg,#e9f3f9,#dff0e9);border-radius:18px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:#567082;font-weight:900;font-size:22px}
+.detail h2{font-size:34px;color:var(--navy);margin-bottom:10px}
+.detail .lead{color:var(--muted);margin-bottom:24px}
+.specs{border-top:1px solid var(--line)}
+.spec-row{display:grid;grid-template-columns:150px 1fr;padding:13px 0;border-bottom:1px solid var(--line)}
+.spec-row b{color:#475569}
+.notice-list{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.notice-row{display:grid;grid-template-columns:90px 1fr 130px;gap:12px;padding:16px 18px;border-top:1px solid var(--line);align-items:center}
+.notice-row:first-child{border-top:0}
+.notice-row .num,.notice-row .date{color:#7b8794;font-size:13px}
+.notice-row .title{font-weight:700}
+.cta{background:linear-gradient(120deg,#133d60,#176c8c);color:#fff;border-radius:18px;padding:42px;display:flex;justify-content:space-between;gap:30px;align-items:center}
+.cta h3{font-size:28px}
+.cta p{color:#d9ebf5}
+.footer{background:#102432;color:#aebdca;padding:42px 0;margin-top:70px}
+.footer-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:30px}
+.footer strong{color:#fff;font-size:19px}
+.footer p{font-size:13px;margin-top:8px}
+@media(max-width:900px){
+  .nav{gap:14px;flex-wrap:wrap;justify-content:flex-end}
+  .nav a{font-size:13px;padding:10px 0}
+  .header-inner{height:auto;min-height:70px;gap:20px}
+  .hero-grid,.detail-grid{grid-template-columns:1fr}
+  .hero h1{font-size:38px}
+  .cards{grid-template-columns:1fr}
+  .feature-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:620px){
+  .container{width:min(100% - 26px,1180px)}
+  .nav{display:none}
+  .hero{padding:70px 0}
+  .hero h1{font-size:32px}
+  .feature-grid{grid-template-columns:1fr}
+  .toolbar{align-items:stretch;flex-direction:column}
+  .search{max-width:none}
+  .table-wrap{overflow-x:auto}
+  table{min-width:760px}
+  .notice-row{grid-template-columns:55px 1fr}
+  .notice-row .date{display:none}
+  .cta{flex-direction:column;align-items:flex-start}
+}
+
+
+/* A/S */
+.as-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.as-step{background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.as-step .step-no{display:inline-flex;width:34px;height:34px;border-radius:50%;align-items:center;justify-content:center;background:var(--blue);color:#fff;font-weight:900;margin-bottom:14px}
+.as-step h3{font-size:18px;color:var(--navy);margin-bottom:8px}
+.as-step p{font-size:14px;color:var(--muted)}
+.as-info{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.info-box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px}
+.info-box h3{color:var(--navy);margin-bottom:12px}
+.info-box ul{padding-left:20px;color:var(--muted)}
+.info-box li{margin:8px 0}
+.form-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:30px;box-shadow:var(--shadow)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.form-group{display:flex;flex-direction:column;gap:7px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:14px;font-weight:800;color:#334155}
+.form-control{width:100%;border:1px solid #cfd8e3;border-radius:8px;padding:12px 13px;font:inherit;background:#fff}
+textarea.form-control{min-height:150px;resize:vertical}
+.form-help{font-size:12px;color:var(--muted)}
+.form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-gray{background:#eef2f6;color:#334155}
+.notice-box{background:#eef6fb;border-left:4px solid var(--blue);padding:18px 20px;border-radius:8px;color:#385065}
+@media(max-width:900px){
+  .as-grid{grid-template-columns:1fr 1fr}
+  .as-info,.form-grid{grid-template-columns:1fr}
+}
+@media(max-width:620px){
+  .as-grid{grid-template-columns:1fr}
+}
+
+@media(min-width:901px){body:has(.hero) .cards{grid-template-columns:repeat(4,1fr)}}
+
+/* Hero 3행 유지: Monitoring + A/S Service 통합 행 */
+.hero-stat-monitoring-as b{font-size:26px;line-height:1.35}
+.hero-stat-monitoring-as span{display:block;line-height:1.55;margin-top:3px}
+@media (max-width: 620px) {
+  .site-header .header-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding-top: 12px;
+    padding-bottom: 10px;
+  }
+
+  .site-header .nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 4px 16px;
+  }
+
+  .site-header .nav a {
+    display: block;
+    padding: 8px 0;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+}
+
+/* PC 메뉴의 밑줄을 글자 가까이 배치 */
+@media (min-width: 621px) {
+  .site-header .nav a {
+    position: relative;
+    border-bottom: none;
+  }
+
+  .site-header .nav a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 22px;
+    height: 3px;
+    background: transparent;
+  }
+
+  .site-header .nav a:hover::after,
+  .site-header .nav a.active::after {
+    background: var(--blue);
+  }
+}
+
+/* A/S 신청의 휴대폰 사진 촬영 */
+#mobile-camera[hidden] {
+  display: none !important;
+}
+
+#mobile-camera {
+  margin-top: 10px;
+}
+
+#mobile-camera .camera-button {
+  border: 0;
+  border-radius: 8px;
+  background: #1367a8;
+  color: white;
+  padding: 12px 20px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#attachment-list {
+  margin-top: 10px;
+}
+
+#attachment-list .attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+#attachment-list .attachment-item img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+#attachment-list .attachment-item span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+
+#attachment-list .attachment-item button {
+  flex-shrink: 0;
+  border: 1px solid #dce4eb;
+  border-radius: 6px;
+  padding: 7px 10px;
+  background: white;
+  color: #475569;
+  cursor: pointer;
+}
+
+#mobile-camera button:disabled,
+#attachment-list button:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+/* 페이지 내용이 짧아도 푸터를 화면 하단에 배치 */
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+body > header,
+body > .page-hero,
+body > footer {
+  flex-shrink: 0;
+}
+
+body > .footer {
+  margin-top: auto;
+}
+
+/* A/S 신청: PC 기본 배치 및 휴대폰 전용 요소의 초기 숨김 */
+.as-mobile-only {
+  display: none;
+}
+
+.as-step-panel,
+.as-symptom-details {
+  display: contents;
+}
+
+/* JS에서 숨긴 단계·입력영역이 display 규칙에 덮이지 않도록 유지 */
+#as-request-form [hidden] {
+  display: none !important;
+}
+
+@media (min-width: 768px) {
+  body > .as-mobile-header,
+  #as-request-form .as-mobile-only {
+    display: none !important;
+  }
+}
+
+
+</style>
+<style id="sn-widget-styles">
+.sn-widget{color-scheme:light;--blue:#245ad0;--ink:#172b46;--muted:#65768b;--line:#d5dfec}
+.sn-widget *{box-sizing:border-box}
+.sn-widget header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:17px}
+.sn-widget h3{font-size:21px;letter-spacing:-.6px;margin:0}
+.sn-widget button,.sn-widget input{font:inherit}
+.sn-widget button{cursor:pointer;touch-action:manipulation}
+.sn-widget button:disabled{opacity:.4;cursor:default}
+.sn-widget :focus-visible{outline:3px solid #70a9ff;outline-offset:2px}
+.sn-widget .tools{display:flex;gap:6px}
+.sn-widget .tools button{background:#fff;border:1px solid var(--line);border-radius:7px;color:#3f6194;font-size:11px;padding:6px 9px}
+.sn-widget .scroll{width:fit-content;max-width:100%;overflow-x:auto;border:1px solid var(--line);border-top:3px solid var(--blue);border-radius:11px;background:#fff;box-shadow:0 5px 22px #243e660a}
+.sn-widget .row{display:grid;grid-template-columns:100px 50px 50px 50px 50px 80px 190px 64px;gap:8px;align-items:start;width:max-content;min-width:718px;padding:15px 14px 17px}
+.sn-widget .field{min-width:0}
+.sn-widget label{display:block;font-size:12px;line-height:20px;font-weight:700;margin:0 0 6px;white-space:nowrap}
+.sn-widget input{width:100%;min-width:0;height:39px;border:1px solid #c6d3e5;border-radius:7px;color:var(--ink);background:#fff;text-align:center;padding:0 5px;font-family:ui-monospace,Consolas,monospace;font-size:16px}
+.sn-widget input:hover{border-color:#7e9dcd}
+.sn-widget input[aria-invalid=true]{border-color:#c34553;background:#fff7f7}
+.sn-widget .serial input{background:#eff4ff;border-color:#cfddf8;color:#1d4da5;font-size:18px;font-weight:700}
+.sn-widget .search-field{padding-top:26px}
+.sn-widget .sn-search{width:100%;height:39px;border:0;border-radius:7px;background:var(--blue);color:white;font-size:12px;font-weight:700}
+.sn-widget .sn-search:hover{background:#1b4bb5}
+.sn-widget .message{min-height:19px;margin:9px 0 0;color:#007d80;font-size:12px}
+.sn-widget .message.error{color:#b52e3e}
+.sn-widget .help{margin:5px 0 0;color:var(--muted);font-size:11px}
+.sn-widget .summary{margin:8px 0 0;font-size:12px;color:#526a88;min-height:20px}
+.sn-widget details{margin-top:17px;border:1px solid var(--line);border-radius:9px;background:#fff;padding:10px 13px;font-size:11px;color:var(--muted)}
+.sn-widget summary{cursor:pointer;font-weight:700;color:#4d6483}
+.sn-widget details p{margin:7px 0 0}
+@media(max-width:600px){.sn-widget header{align-items:start;gap:9px}
+.sn-widget h3{font-size:18px}
+.sn-widget .tools button{font-size:10px;padding:5px 7px}}
+@media print{.sn-widget .tools,.sn-widget .search-field,.sn-widget .message,.sn-widget .help,.sn-widget details{display:none}
+.sn-widget .scroll{overflow:visible;box-shadow:none}
+.sn-widget .row{min-width:0;grid-template-columns:100px 50px 50px 50px 50px 80px minmax(205px,1fr)}}
+.sn-widget .combo{position:relative}
+.sn-widget .combo input{padding-right:18px;padding-left:2px}
+.sn-widget .list-toggle{position:absolute;right:1px;top:1px;width:18px;height:37px;padding:0;border:0;border-left:1px solid #dce4ef;border-radius:0 6px 6px 0;background:#f2f6fc;color:#42629a;font-size:9px;line-height:1}
+.sn-widget .list-toggle:hover,.sn-widget .list-toggle[aria-expanded=true]{background:#dfeaff;color:#174bb2}
+.sn-widget .picker{position:fixed;z-index:1000;overflow:auto;overscroll-behavior:contain;border:1px solid #b4c8e7;border-radius:8px;background:white;box-shadow:0 9px 28px #19365b29;padding:4px;min-width:80px;scrollbar-width:thin}
+.sn-widget .picker-option{font-family:ui-monospace,Consolas,monospace;font-size:15px;line-height:30px;min-height:30px;border-radius:5px;text-align:center;cursor:pointer;user-select:none}
+.sn-widget .picker-option[aria-selected=true]{font-weight:800;color:#194fae;background:#eef4ff}
+.sn-widget .picker-option.active{background:#245ad0;color:white}
+.sn-widget .picker[hidden]{display:none}
+@media print{.sn-widget .list-toggle,.sn-widget .picker{display:none}
+.sn-widget .combo input{padding:0 5px}}
+.sn-widget input::placeholder{font-family:"Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;font-size:12px;font-weight:400;color:#8491a4;opacity:1}
+.sn-widget .sequence-wrap{position:relative}
+.sn-widget .sequence-wrap input{padding-right:19px;padding-left:3px}
+.sn-widget .sequence-arrows{position:absolute;right:1px;top:1px;bottom:1px;width:18px;display:grid;grid-template-rows:1fr 1fr;border-left:1px solid #dce4ef;border-radius:0 6px 6px 0;overflow:hidden}
+.sn-widget .sequence-arrows button{border:0;padding:0;background:#f1f5fc;color:#42629a;font-size:8px;line-height:1}
+.sn-widget .sequence-arrows button+button{border-top:1px solid #dce4ef}
+.sn-widget .sequence-arrows button:hover:not(:disabled){background:#dfeaff;color:#174bb2}
+.sn-widget .sequence-arrows button:disabled{opacity:1;color:#b2bfce;background:#f8fafc}
+@media print{.sn-widget .sequence-arrows{display:none}
+.sn-widget .sequence-wrap input{padding:0 5px}}
+.sn-widget .sequence-arrows button{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+</style>
+<style id="as-layout-styles">
+
+ .as-request-section .container{max-width:1000px}.as-request-section{padding-top:36px}.as-request-notice{font-size:13px}.as-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 22px}#as-request-form .form-control{min-width:0;max-width:100%}#as-request-form select.form-control{min-height:48px}.sn-widget{margin:0 0 26px;padding-bottom:19px;border-bottom:1px solid #e6ecf3}.sn-widget header{margin-bottom:13px}.sn-widget h3{font-size:18px}.sn-widget .scroll{max-width:100%;width:fit-content}.sn-widget .search-field{padding-top:26px}.sn-widget .sn-search{width:100%;height:39px;border:0;border-radius:7px;background:#245ad0;color:#fff;font-size:12px;font-weight:700}.sn-widget .sn-search:disabled{opacity:.4;cursor:default}.sn-widget .message{margin-top:8px}.sn-widget .summary{margin-top:5px}.sn-widget .summary:empty{display:none}.sn-widget .message{white-space:pre-line}.symptom-heading{display:flex;gap:12px;align-items:center;justify-content:space-between}.symptom-heading label{margin:0;white-space:nowrap}.symptom-type{width:180px!important;min-height:40px!important;padding:8px 10px!important;font-size:13px!important}.privacy-label{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.privacy-label input{width:17px;height:17px;flex-shrink:0}.privacy-group .notice-box{font-size:13px}.form-group input:focus-visible,.form-group select:focus-visible,.form-group textarea:focus-visible{outline:3px solid #a6c7f0;outline-offset:1px}#request-result{margin-top:18px;white-space:pre-line;color:#385d87;font-size:13px}.form-actions .btn{min-height:44px}.as-mobile-header{display:none}.as-fields .form-group{min-width:0}#attachment-list{display:grid;gap:7px}#attachment-list .attachment-item{display:flex;gap:10px;align-items:center;min-width:0;padding:8px 10px;border:1px solid #e3eaf2;border-radius:7px;font-size:12px}#attachment-list .attachment-item span{flex:1;overflow-wrap:anywhere}#attachment-list .attachment-item button{flex-shrink:0;border:1px solid #d5dfeb;border-radius:5px;background:#fff;padding:3px 8px}button{touch-action:manipulation}#as-request-form [hidden]{display:none!important}
+ @media(max-width:767px){.as-fields{grid-template-columns:1fr}.form-card{padding:20px 16px}.as-request-section{padding-top:22px}.as-request-notice{padding:13px 14px;font-size:12px}.as-request-spacer{height:15px!important}.sn-widget .row{padding:13px 10px 15px;min-width:710px}.sn-widget header{align-items:center;flex-direction:row}.sn-widget h3{font-size:17px}.sn-widget .tools button{font-size:11px}.as-desktop-heading h2{font-size:24px!important}.symptom-type{width:160px!important}.page-hero{padding:32px 0}.page-hero h1{font-size:29px}.page-hero p{font-size:13px}.footer-grid{grid-template-columns:1fr;gap:16px}.form-actions{justify-content:stretch}.form-actions .btn{flex:1;text-align:center}}
+ @media(max-width:620px){body>.site-header{display:none}.as-mobile-header{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border-bottom:1px solid #e1e8ef;padding:14px 16px}.as-mobile-brand{font-size:15px;font-weight:800;color:#163b60;text-decoration:none}.as-mobile-brand span{font-size:12px;font-weight:500;color:#6b7d90}.as-mobile-menu{position:relative}.as-mobile-menu summary{list-style:none;cursor:pointer;padding:4px}.as-mobile-menu summary::-webkit-details-marker{display:none}.as-mobile-menu nav{position:absolute;right:0;top:35px;z-index:120;background:white;border:1px solid #dce6ef;border-radius:8px;box-shadow:0 8px 22px #132f5019;width:130px;padding:7px}.as-mobile-menu nav a{display:block;padding:8px 10px;color:#294964;text-decoration:none;font-size:13px}.as-request-section .container{width:calc(100% - 20px)}}
+ @media print{body>.site-header,body>.as-mobile-header,.page-hero,.as-request-notice,.as-request-spacer,.footer,.form-actions,#mobile-camera{display:none!important}.section{padding:0}.form-card{border:0;box-shadow:none;padding:0}.as-request-section .container{width:100%;max-width:none}.as-fields{grid-template-columns:1fr 1fr}.sn-widget .scroll{overflow:visible}.sn-widget .row{min-width:0;width:100%;grid-template-columns:90px 44px 44px 44px 44px 70px 190px;gap:6px;padding:10px}.sn-widget .search-field{display:none}.form-group{break-inside:avoid}.symptom-type{display:none}}
+
+</style>
+<style id="sn-mobile-layout">
+/* Mobile: no horizontal scrolling; production sequence starts on a new row. */
+@media screen and (max-width:767px){
+ .sn-widget .scroll{width:100%;overflow:visible}
+ .sn-widget .row{width:100%;min-width:0;grid-template-columns:minmax(72px,1.65fr) repeat(4,minmax(0,1fr));gap:14px 4px;padding:13px 8px 15px}
+ .sn-widget label{font-size:11px}
+ .sn-widget input{height:44px}
+ .sn-widget .list-toggle{height:42px}
+ .sn-widget .sequence-field{grid-column:1/-1}
+ .sn-widget .sequence-wrap{display:grid;grid-template-columns:minmax(64px,100px) 48px 48px;gap:8px;align-items:center}
+ .sn-widget .sequence-wrap input{height:48px;padding:0 5px}
+ .sn-widget .sequence-arrows{display:contents}
+ .sn-widget .sequence-arrows button{width:48px;height:48px;border:1px solid #bdcde4;border-radius:8px;background:#edf3ff;font-size:17px;line-height:1}
+ .sn-widget .sequence-arrows button+button{border-top:1px solid #bdcde4}
+ .sn-widget .sequence-arrows button:active:not(:disabled){background:#cfdef8;color:#174bb2}
+ .sn-widget .serial{grid-column:1/5}
+ .sn-widget .serial input{font-size:16px;letter-spacing:0}
+ .sn-widget .search-field{grid-column:5/6;padding-top:26px}
+ .sn-widget .sn-search{height:44px;font-size:11px}
+ .sn-widget .picker-option{min-height:44px;line-height:44px}
 }
 </style>
 </head>
@@ -66,128 +486,55 @@
 
 <section class="section as-request-section">
   <div class="container">
-    <div class="notice-box as-request-notice">
-      제출한 요청은 검토 대기로 등록됩니다.
-      관리자가 확인하여 정식 접수하면 접수번호가 생성됩니다.
-      요청 제출만으로 정식 접수가 완료되는 것은 아닙니다.
-    </div>
+    <div class="notice-box as-request-notice">제출한 요청은 검토 대기로 등록됩니다. 관리자가 확인하여 정식 접수하면 접수번호가 생성됩니다.</div>
 
     <div style="height:22px" class="as-request-spacer"></div>
 
-    <form class="form-card" id="as-request-form">
-      <noscript><p class="notice-box">A/S 신청서를 전송하려면 브라우저의 자바스크립트를 활성화해 주세요.</p></noscript><div class="section-head as-desktop-heading" style="text-align:left;margin-bottom:25px">
-        <div class="kicker">A/S REQUEST FORM</div>
-        <h2 style="font-size:28px">A/S 접수 요청서</h2>
-        <p>* 표시 항목은 필수입니다.</p>
-      </div>
+    <form class="form-card" id="as-request-form" data-serial-validation="true" novalidate>
+ <noscript><p class="notice-box">입력 기능을 사용하려면 자바스크립트를 활성화해 주세요.</p></noscript>
+ <div class="section-head as-desktop-heading" style="text-align:left;margin-bottom:24px"><div class="kicker">A/S REQUEST FORM</div><h2 style="font-size:28px">A/S 접수 요청서</h2><p>* 표시 항목은 필수입니다.</p></div>
+<section class="sn-widget" aria-label="인버터 시리얼 번호 입력 및 검색">
+<header><h3>인버터 S/N 입력</h3><div class="tools"></div></header>
+<div class="scroll" tabindex="0" role="region" aria-label="시리얼 번호 입력 항목">
+ <div class="row">
+  <div class="field"><label for="model">모델코드</label><input id="model" value="" maxlength="6" pattern="[A-Za-z0-9]{6}" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="모델코드 6자리 직접 입력" placeholder="6자리"></div>
+  <div class="field"><label for="fuse">퓨즈</label><div class="combo" data-field="fuse"><input id="fuse" value="E" maxlength="1" pattern="[A-Fa-f]" role="combobox" aria-autocomplete="none" aria-haspopup="listbox" aria-controls="serialOptions" aria-expanded="false" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="퓨즈 A부터 F까지 입력 또는 선택"><button type="button" class="list-toggle" data-for="fuse" aria-label="퓨즈 선택 목록 열기" aria-haspopup="listbox" aria-controls="serialOptions" aria-expanded="false">▼</button></div></div>
+  <div class="field"><label for="year">연도</label><div class="combo" data-field="year"><input id="year" value="" placeholder="YY" maxlength="2" inputmode="numeric" pattern="[0-9]{1,2}" role="combobox" aria-autocomplete="none" aria-haspopup="listbox" aria-controls="serialOptions" aria-expanded="false" autocomplete="off" aria-label="생산 연도 뒤 두 자리 숫자"><button type="button" class="list-toggle" data-for="year" aria-label="연도 선택 목록 열기" aria-haspopup="listbox" aria-controls="serialOptions" aria-expanded="false">▼</button></div></div>
+  <div class="field"><label for="month">월</label><div class="combo" data-field="month"><input id="month" value="" placeholder="월" maxlength="1" pattern="[1-9ABCabc]" role="combobox" aria-autocomplete="none" aria-haspopup="listbox" aria-controls="serialOptions" aria-expanded="false" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="생산 월 1부터 9 또는 A B C"><button type="button" class="list-toggle" data-for="month" aria-label="월 선택 목록 열기" aria-haspopup="listbox" aria-controls="serialOptions" aria-expanded="false">▼</button></div></div>
+  <div class="field"><label for="day">일</label><div class="combo" data-field="day"><input id="day" value="" placeholder="일" maxlength="2" inputmode="numeric" pattern="[0-9]{1,2}" role="combobox" aria-autocomplete="none" aria-haspopup="listbox" aria-controls="serialOptions" aria-expanded="false" autocomplete="off" aria-label="생산 일자 숫자 입력"><button type="button" class="list-toggle" data-for="day" aria-label="일 선택 목록 열기" aria-haspopup="listbox" aria-controls="serialOptions" aria-expanded="false">▼</button></div></div>
+  <div class="field sequence-field"><label for="sequence">생산 순번</label><div class="sequence-wrap"><input id="sequence" value="" placeholder="4자리" maxlength="4" inputmode="numeric" pattern="[0-9]{1,4}" autocomplete="off" aria-label="생산 순번 숫자 최대 네 자리 통합 입력"><div class="sequence-arrows"><button type="button" id="seqUp" aria-label="생산 순번 1 증가" title="순번 증가">▲</button><button type="button" id="seqDown" aria-label="생산 순번 1 감소" title="순번 감소">▼</button></div></div></div>
+  <div class="field serial"><label for="serial">완성 S/N</label><input id="serial" name="serial_number" value="" required pattern="[A-Za-z0-9]{6}[A-Fa-f][0-9]{2}[1-9ABCabc][0-9]{6}" placeholder="완성 S/N" maxlength="100" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="시리얼 번호 16자리. 직접 입력하면 항목별로 분리됩니다."></div>
+  <div class="search-field"><button id="snSearch" type="button" class="sn-search">검색</button></div>
+ </div>
+</div>
+<datalist id="fuses"><option value="A"></option><option value="B"></option><option value="C"></option><option value="D"></option><option value="E"></option><option value="F"></option></datalist>
+<datalist id="months"><option value="1"></option><option value="2"></option><option value="3"></option><option value="4"></option><option value="5"></option><option value="6"></option><option value="7"></option><option value="8"></option><option value="9"></option><option value="A"></option><option value="B"></option><option value="C"></option></datalist>
+<datalist id="years"></datalist><datalist id="days"></datalist>
+<div class="picker" id="serialOptions" role="listbox" aria-label="선택 목록" hidden></div>
+<p class="message" id="message" role="status" aria-live="polite"></p>
 
-      <div class="as-step-heading as-mobile-only">
-  <h1 id="as-step-title" tabindex="-1">제품·현장 정보를 입력해 주세요</h1>
-  <span id="as-step-count" role="status" aria-live="polite">1 / 3단계</span>
-</div><div class="form-grid">
-        <div class="as-step-panel" data-as-step="1"><div class="form-group">
-          <label for="customer_name">회사명 / 고객명 *</label>
-          <input id="customer_name" name="customer_name" class="form-control" maxlength="150" required placeholder="회사명 또는 고객명">
-        </div>
+<p class="summary" id="description" aria-live="polite"></p>
 
-        <div class="form-group">
-          <label for="contact_name">담당자명 *</label>
-          <input id="contact_name" name="contact_name" class="form-control" maxlength="100" required placeholder="담당자명">
-        </div>
-
-        <div class="form-group">
-          <label for="phone">연락처 *</label>
-          <input id="phone" name="phone" class="form-control" type="tel" maxlength="30" required placeholder="010-0000-0000">
-        </div>
-
-        <div class="form-group">
-          <label for="email">이메일</label>
-          <input id="email" name="email" class="form-control" type="email" maxlength="254" placeholder="name@example.com">
-        </div>
-
-        <div class="form-group">
-          <label for="plant_name">발전소명 *</label>
-          <input id="plant_name" name="plant_name" class="form-control" maxlength="150" required placeholder="○○ 태양광발전소">
-        </div>
-
-        <div class="form-group">
-          <label for="installation_region">설치 지역</label>
-          <input id="installation_region" name="installation_region" class="form-control" maxlength="150" placeholder="시/도, 시/군/구">
-        </div>
-
-        <div class="form-group">
-          <label for="product_type">제품 구분 *</label>
-          <select id="product_type" name="product_type" class="form-control" required>
-            <option value="">선택</option>
-            <option value="태양광 인버터">태양광 인버터</option>
-            <option value="통신 RTU">통신 RTU</option>
-            <option value="기타">기타</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="model_name">제품 모델명 *</label>
-          <input id="model_name" name="model_name" class="form-control" maxlength="100" required placeholder="모델명">
-        </div>
-
-        <div class="form-group">
-          <label for="serial_number">시리얼번호(S/N) *</label>
-          <input id="serial_number" name="serial_number" class="form-control" maxlength="100" required placeholder="제품 시리얼번호">
-        </div>
-
-        </div><div class="as-step-panel" data-as-step="2"><div class="as-symptom-picker as-mobile-only" role="group" aria-label="고장 증상 선택"><button type="button" class="as-symptom-option" data-as-symptom="발전 불량" aria-pressed="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-3 7h6l-5 13 2-9H7l6-11Z"></path><path d="m3 3 18 18"></path></svg><span>발전 불량</span></button><button type="button" class="as-symptom-option" data-as-symptom="통신 불량" aria-pressed="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8a15 15 0 0 1 18 0M6 12a10 10 0 0 1 12 0M9 16a5 5 0 0 1 6 0M12 20h.01M3 3l18 18"></path></svg><span>통신 불량</span></button><button type="button" class="as-symptom-option" data-as-symptom="Fault 발생" aria-pressed="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 10 18H2L12 3Z"></path><path d="M12 9v5M12 17h.01"></path></svg><span>Fault 발생</span></button><button type="button" class="as-symptom-option" data-as-symptom="출력 이상" aria-pressed="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"></rect><path d="m7 13 3-4 4 5 3-5"></path></svg><span>출력 이상</span></button><button type="button" class="as-symptom-option" data-as-symptom="외관 파손" aria-pressed="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 4a6 6 0 0 1-7 8l-7 8a2 2 0 0 1-3-3l8-7a6 6 0 0 1 8-7l-4 4 2 2 4-4Z"></path></svg><span>외관 파손</span></button><button type="button" class="as-symptom-option" data-as-symptom="기타 증상" aria-pressed="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle></svg><span>기타 증상</span></button></div><button type="button" class="as-details-toggle as-mobile-only" id="as-details-toggle" aria-expanded="false" aria-controls="as-symptom-details">추가 증상·오류코드 입력 <span>(선택)</span> <span aria-hidden="true">＋</span></button><div class="as-symptom-details" id="as-symptom-details"><div class="form-group">
-          <label for="fault_code">Fault / 오류코드</label>
-          <input id="fault_code" name="fault_code" class="form-control" maxlength="100" placeholder="표시된 오류코드가 있는 경우 입력">
-        </div>
-
-        <div class="form-group full">
-          <label for="symptoms">고장 증상 *</label>
-          <textarea id="symptoms" name="symptoms" class="form-control" maxlength="10000" rows="6" required placeholder="발생 시점, 증상, 반복 여부 등을 입력해 주세요."></textarea>
-        </div>
-
-        </div></div><div class="as-step-panel" data-as-step="3"><div class="form-group full">
-          <label for="attachments">사진 / 자료 첨부</label>
-
-          <input id="attachments" name="attachments" class="form-control" type="file" accept=".jpg,.jpeg,.png,.webp,.pdf" multiple>
-
-          <div id="mobile-camera" hidden>
-            <button id="camera-button" class="camera-button" type="button">
-              사진 촬영
-            </button>
-
-            <input id="camera-photo" type="file" accept="image/*" capture="environment" hidden>
-          </div>
-
-          <div class="form-help">
-            사진과 PDF를 합해 최대 5개, 파일당 10MB까지 첨부할 수 있습니다.
-            선택한 파일은 아래 목록에서 확인하세요.
-          </div>
-
-          <div id="attachment-list"></div>
-        </div>
-
-        <div class="form-group full">
-          <div class="notice-box">입력하신 정보는 A/S 접수 확인과 고객 연락, 처리 이력 관리에 사용됩니다.</div>
-
-          <label for="privacy_agreed">
-            <input id="privacy_agreed" name="privacy_agreed" type="checkbox" required>
-            개인정보 수집 및 이용에 동의합니다. *
-          </label>
-        </div>
-      <p class="form-help as-mobile-only">제출한 요청은 관리자 검토 후 정식 접수됩니다.</p></div></div>
-
-      <p id="request-result" role="status" aria-live="polite" style="white-space:pre-line"></p>
-
-      <div class="form-actions as-desktop-actions">
-        <a class="btn btn-gray" href="as-service.html">취소</a>
-        <button class="btn btn-blue" type="submit">
-          A/S 접수 요청
-        </button>
-      </div>
-    <div class="as-mobile-actions as-mobile-only">
-  <button type="button" id="as-step-back" class="as-back">이전 단계</button>
-  <button type="button" id="as-step-next" class="as-next">다음 단계 <span aria-hidden="true">→</span></button>
-</div></form>
+</section>
+ <div class="form-grid as-fields">
+  <div class="form-group"><label for="product_type">제품 구분 *</label><select id="product_type" name="product_type" class="form-control" required><option value="">선택</option><option value="태양광 인버터">태양광 인버터</option><option value="통신 RTU">통신 RTU</option><option value="기타">기타</option></select></div>
+  <div class="form-group"><label for="model_name">모델명 *</label><input id="model_name" name="model_name" class="form-control" maxlength="100" required placeholder="모델명"></div>
+  <div class="form-group"><label for="customer_name">회사명 *</label><input id="customer_name" name="customer_name" class="form-control" maxlength="150" required placeholder="회사명"></div>
+  <div class="form-group"><label for="plant_name">발전소명 *</label><input id="plant_name" name="plant_name" class="form-control" maxlength="150" required placeholder="발전소명"></div>
+  <div class="form-group"><label for="installation_region">설치 구역</label><input id="installation_region" name="installation_region" class="form-control" maxlength="150" placeholder="설치 지역 또는 구역"></div>
+  <div class="form-group"><label for="fault_code">Fault / 오류코드</label><input id="fault_code" name="fault_code" class="form-control" maxlength="100" placeholder="표시된 오류코드가 있는 경우 입력"></div>
+  <div class="form-group"><label for="contact_name">담당자명 *</label><input id="contact_name" name="contact_name" class="form-control" maxlength="100" required placeholder="담당자명" autocomplete="name"></div>
+  <div class="form-group"><label for="phone">연락처 *</label><input id="phone" name="phone" class="form-control" type="tel" maxlength="30" required placeholder="010-0000-0000" autocomplete="tel"></div>
+  <div class="form-group full symptom-group">
+   <div class="symptom-heading"><label for="symptoms">고장 증상 *</label><select id="symptom_type" class="form-control symptom-type" aria-label="고장 증상 선택"><option value="">증상 선택</option><option value="발전 불량">발전 불량</option><option value="통신 불량">통신 불량</option><option value="Fault 발생">Fault 발생</option><option value="출력 이상">출력 이상</option><option value="외관 파손">외관 파손</option><option value="기타 증상">기타 증상</option></select></div>
+   <textarea id="symptoms" name="symptoms" class="form-control" maxlength="10000" rows="5" required placeholder="증상을 선택하거나 발생 시점·반복 여부 등 상세 내용을 입력해 주세요."></textarea>
+  </div>
+  <div class="form-group full"><label for="attachments">사진 / 자료 첨부</label><input id="attachments" name="attachments" class="form-control" type="file" accept=".jpg,.jpeg,.png,.webp,.pdf" multiple><div id="mobile-camera" hidden><button id="camera-button" class="camera-button" type="button">사진 촬영</button><input id="camera-photo" type="file" accept="image/*" capture="environment" hidden></div><div class="form-help">사진과 PDF를 합해 최대 5개, 파일당 10MB까지 선택할 수 있습니다.</div><div id="attachment-list" aria-live="polite"></div></div>
+  <div class="form-group full privacy-group"><div class="notice-box">입력하신 정보는 A/S 접수 확인과 고객 연락, 처리 이력 관리에 사용됩니다.</div><label for="privacy_agreed" class="privacy-label"><input id="privacy_agreed" name="privacy_agreed" type="checkbox" required> 개인정보 수집 및 이용에 동의합니다. *</label></div>
+ </div>
+ <p id="request-result" role="status" aria-live="polite"></p>
+ <div class="form-actions"><a class="btn btn-gray" href="as-service.html">취소</a><button class="btn btn-blue" id="request-submit" type="submit">A/S 접수 요청</button></div>
+</form>
   </div>
 </section>
 
@@ -205,7 +552,734 @@
   </div>
 </footer>
 
-<script src="js/main.js"></script>
-<script src="js/as-request-mobile.js"></script><script src="js/as-request.js"></script>
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", () => {
+  const path = location.pathname.split("/").pop() || "index.html";
+  document.querySelectorAll(".nav a").forEach(a => {
+    const href = a.getAttribute("href");
+    if (href === path) a.classList.add("active");
+  });
+
+  const q = document.querySelector("#searchInput");
+  if (q) {
+    q.addEventListener("input", () => {
+      const keyword = q.value.trim().toLowerCase();
+      document.querySelectorAll("[data-search]").forEach(row => {
+        row.style.display = row.dataset.search.toLowerCase().includes(keyword) ? "" : "none";
+      });
+    });
+  }
+});
+
+
+</script>
+<script>
+/* Same validator is embedded in public/as-request.html. No DB lookup here. */
+(function(root,factory){
+  if(typeof module==='object'&&module.exports)module.exports=factory();
+  else root.SolisSerialRules=factory();
+})(typeof globalThis!=='undefined'?globalThis:this,function(){
+  'use strict';
+  const months=['1','2','3','4','5','6','7','8','9','A','B','C'];
+  const labels={model:'모델코드(1~6번째)',fuse:'퓨즈 구분(7번째)',year:'생산 연도(8~9번째)',month:'생산 월(10번째)',day:'생산 일자(11~12번째)',sequence:'생산 순번(13~16번째)'};
+  function inspect(source,compact){
+    const parts={},errors=[];
+    for(const field of Object.keys(labels))parts[field]=typeof source[field]==='string'?(compact?source[field].trim():source[field]).toUpperCase():'';
+    const issue=(field,rule)=>errors.push({field,message:labels[field]+': '+rule+' 수정해 주세요.'});
+    if(!/^[A-Z0-9]{6}$/.test(parts.model))issue('model','영문·숫자 6자리로');
+    if(!/^[A-F]$/.test(parts.fuse))issue('fuse','A·B·C·D·E·F 중 하나로');
+    const yearOK=(compact?/^\d{1,2}$/:/^\d{2}$/).test(parts.year);
+    if(!yearOK)issue('year','연도의 뒤 두 자리 숫자로');
+    const monthOK=months.includes(parts.month);
+    if(!monthOK)issue('month','1~9 또는 A(10월)·B(11월)·C(12월)로');
+    const dayOK=(compact?/^\d{1,2}$/:/^\d{2}$/).test(parts.day)&&Number(parts.day)>=1&&Number(parts.day)<=31;
+    if(!dayOK)issue('day','01~31 범위의 숫자로');
+    else if(yearOK&&monthOK){
+      const last=new Date(Date.UTC(2000+Number(parts.year),months.indexOf(parts.month)+1,0)).getUTCDate();
+      if(Number(parts.day)>last)issue('day','해당 연도·월에 존재하는 날짜(01~'+String(last).padStart(2,'0')+')로');
+    }
+    if(!(compact?/^\d{1,4}$/:/^\d{4}$/).test(parts.sequence)||Number(parts.sequence)<1||Number(parts.sequence)>9999)issue('sequence','0001~9999 범위의 숫자로');
+    const valid=errors.length===0;
+    if(valid){parts.year=parts.year.padStart(2,'0');parts.day=parts.day.padStart(2,'0');parts.sequence=parts.sequence.padStart(4,'0');}
+    return{valid,parts,errors,serial:valid?parts.model+parts.fuse+parts.year+parts.month+parts.day+parts.sequence:'',message:errors.map(error=>error.message).join('\n')};
+  }
+  function validate(value){
+    const serial=typeof value==='string'?value.trim().toUpperCase():'';
+    if(serial.length!==16){const message='시리얼 번호(S/N): 16자리로 수정해 주세요. 현재 '+serial.length+'자리입니다.';return{valid:false,serial,parts:null,errors:[{field:'serial',message}],message};}
+    const parts={model:serial.slice(0,6),fuse:serial[6],year:serial.slice(7,9),month:serial[9],day:serial.slice(10,12),sequence:serial.slice(12)};
+    const result=inspect(parts,false);return{...result,serial:result.valid?result.serial:serial};
+  }
+  return Object.freeze({validate,validateParts:parts=>inspect(parts||{},true)});
+});
+
+</script>
+<script>
+
+'use strict';
+(() => {
+ const $=id=>document.getElementById(id);
+ const codes=['1','2','3','4','5','6','7','8','9','A','B','C'];
+ const fuses={A:32,B:15,C:20,D:25,E:30,F:35};
+ const fields=['model','fuse','year','month','day','sequence'];
+ const touched=new Set();
+ function notify(text,error=false){$('message').textContent=text;$('message').classList.toggle('error',error);}
+ function maxDay(year,month){return new Date(Date.UTC(2000+Number(year),codes.indexOf(month)+1,0)).getUTCDate();}
+ function validate(values){return SolisSerialRules.validateParts(values).errors.map(error=>[error.field,error.message]);}
+ function values(){return Object.fromEntries(fields.map(id=>[id,$(id).value]));}
+ function canonical(v){return v.model+v.fuse+v.year.padStart(2,'0')+v.month+v.day.padStart(2,'0')+v.sequence.padStart(4,'0');}
+ function setInvalid(errors){fields.forEach(id=>$(id).setAttribute('aria-invalid',String(errors.some(e=>e[0]===id)&&($(id).value!==''||touched.has(id)))));}
+ function fillDays(){
+  const v=values();const count=/^\d{1,2}$/.test(v.year)&&codes.includes(v.month)?maxDay(v.year,v.month):31;
+  if($('days').options.length===count)return;
+  $('days').replaceChildren(...Array.from({length:count},(_,i)=>new Option(String(i+1).padStart(2,'0'),String(i+1).padStart(2,'0'))));
+ }
+ function describe(v){$('description').textContent='모델 '+v.model+' / '+fuses[v.fuse]+'A / '+(2000+Number(v.year))+'-'+String(codes.indexOf(v.month)+1).padStart(2,'0')+'-'+v.day.padStart(2,'0')+' / 순번 '+v.sequence.padStart(4,'0');}
+ function clearValidity(){[...fields,'serial'].forEach(id=>$(id).setCustomValidity(''));}
+ function render(){
+  clearValidity();
+  const v=values(),errors=validate(v);setInvalid(errors);fillDays();
+  $('seqUp').disabled=/^\d{1,4}$/.test(v.sequence)&&Number(v.sequence)>=9999;
+  $('seqDown').disabled=!/^\d{1,4}$/.test(v.sequence)||Number(v.sequence)<=1;
+  $('serial').setAttribute('aria-invalid','false');
+  if(errors.length){$('serial').value='';$('snSearch').disabled=true;$('description').textContent='';const visible=errors.find(e=>$(e[0]).value!==''||touched.has(e[0]));notify(visible?visible[1]:'모델코드·생산일자·생산 순번을 입력해 주세요.',!!visible);return;}
+  $('serial').value=canonical(v);$('snSearch').disabled=false;describe(v);notify('');
+ }
+ fields.forEach(id=>{
+  $(id).addEventListener('input',()=>{touched.add(id);if(['model','fuse','month'].includes(id))$(id).value=$(id).value.toUpperCase();render();});
+  $(id).addEventListener('blur',()=>{
+   touched.add(id);
+   if(['year','day','sequence'].includes(id)&&/^\d+$/.test($(id).value))$(id).value=$(id).value.padStart(id==='sequence'?4:2,'0');
+   render();
+  });
+  $(id).addEventListener('keydown',event=>{
+   if(!event.altKey||!['ArrowUp','ArrowDown'].includes(event.key)||id==='model')return;
+   event.preventDefault();const step=event.key==='ArrowUp'?1:-1;
+   if(id==='fuse'||id==='month'){
+    const choices=id==='fuse'?Object.keys(fuses):codes;const index=choices.indexOf($(id).value.toUpperCase());$(id).value=choices[Math.max(0,Math.min(choices.length-1,(index<0?0:index)+step))];
+   }else{
+    const v=values(),limit=id==='sequence'?9999:id==='year'?99:/^\d{1,2}$/.test(v.year)&&codes.includes(v.month)?maxDay(v.year,v.month):31;
+    $(id).value=String(Math.max(id==='day'||id==='sequence'?1:0,Math.min(limit,(Number($(id).value)||0)+step))).padStart(id==='sequence'?4:2,'0');
+   }
+   render();
+  });
+ });
+ $('serial').addEventListener('input',()=>{
+  clearValidity();
+  const review=SolisSerialRules.validate($('serial').value);
+  $('serial').value=review.serial;
+  if(review.parts){fields.forEach(id=>{$(id).value=review.parts[id];touched.add(id);});setInvalid(review.errors.map(error=>[error.field,error.message]));fillDays();}
+  $('serial').setAttribute('aria-invalid',String(!review.valid));
+  $('snSearch').disabled=!review.valid;
+  $('seqUp').disabled=/^\d{1,4}$/.test($('sequence').value)&&Number($('sequence').value)>=9999;
+  $('seqDown').disabled=!/^\d{1,4}$/.test($('sequence').value)||Number($('sequence').value)<=1;
+  if(!review.valid){$('description').textContent='';notify(review.message,true);return;}
+  describe(review.parts);notify('');
+ });
+ function stepSequence(step){
+  closeList();
+  const raw=$('sequence').value;
+  const base=/^\d{1,4}$/.test(raw)?Number(raw):0;
+  $('sequence').value=String(Math.max(1,Math.min(9999,base+step))).padStart(4,'0');
+  touched.add('sequence');render();
+ }
+ let sequenceHold=null;
+ function stopSequenceHold(){
+  const old=sequenceHold;sequenceHold=null;
+  if(!old)return;
+  clearTimeout(old.timer);
+  try{if(old.button.hasPointerCapture(old.pointerId))old.button.releasePointerCapture(old.pointerId);}catch(_){}
+ }
+ function scheduleSequenceHold(){
+  const state=sequenceHold;if(!state)return;
+  if(state.button.disabled){stopSequenceHold();return;}
+  const elapsed=performance.now()-state.started;
+  const delay=elapsed>=2500?20:elapsed>=1200?40:90;
+  state.timer=setTimeout(()=>{
+   if(sequenceHold!==state)return;
+   if(state.button.disabled){stopSequenceHold();return;}
+   stepSequence(state.step);scheduleSequenceHold();
+  },delay);
+ }
+ for(const [id,step] of [['seqUp',1],['seqDown',-1]]){
+  const button=$(id);
+  button.addEventListener('pointerdown',event=>{
+   if(event.button!==0||button.disabled)return;
+   event.preventDefault();stopSequenceHold();
+   const state={button,step,pointerId:event.pointerId,timer:null,started:performance.now()};sequenceHold=state;
+   try{button.setPointerCapture(event.pointerId);}catch(_){}
+   stepSequence(step);
+   if(button.disabled){stopSequenceHold();return;}
+   state.timer=setTimeout(()=>{
+    if(sequenceHold!==state)return;
+    if(button.disabled){stopSequenceHold();return;}
+    stepSequence(step);scheduleSequenceHold();
+   },320);
+  });
+  // Pointer presses already step on pointerdown. Keep keyboard/assistive clicks.
+  button.addEventListener('click',event=>{if(event.detail===0)stepSequence(step);});
+  button.addEventListener('pointerleave',()=>{if(sequenceHold?.button===button)stopSequenceHold();});
+  button.addEventListener('lostpointercapture',()=>{if(sequenceHold?.button===button)stopSequenceHold();});
+ }
+ window.addEventListener('pointerup',event=>{if(sequenceHold?.pointerId===event.pointerId)stopSequenceHold();},true);
+ window.addEventListener('pointercancel',event=>{if(sequenceHold?.pointerId===event.pointerId)stopSequenceHold();},true);
+ window.addEventListener('pointermove',event=>{
+  if(!sequenceHold||sequenceHold.pointerId!==event.pointerId)return;
+  const r=sequenceHold.button.getBoundingClientRect();
+  if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)stopSequenceHold();
+ },true);
+ window.addEventListener('blur',stopSequenceHold);
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopSequenceHold();});
+ $('sequence').addEventListener('keydown',event=>{
+  if(event.altKey||!['ArrowUp','ArrowDown'].includes(event.key))return;
+  event.preventDefault();stepSequence(event.key==='ArrowUp'?1:-1);
+ });
+ $('snSearch').addEventListener('click',()=>{
+  if($('snSearch').disabled)return;
+  const serialNumber=$('serial').value;
+  // Future DB adapter can consume this event. No lookup is performed now.
+  document.getElementById('as-request-form').dispatchEvent(new CustomEvent('as:serial-search',{detail:{serial_number:serialNumber},bubbles:true}));
+  notify('검색 기능은 아직 연결되지 않았습니다. 아래 제품·현장 정보를 직접 입력해 주세요.');
+ });
+ document.querySelector('.sn-widget').addEventListener('keydown',event=>{
+  if(event.key==='Enter'&&event.target.tagName==='INPUT'){
+   event.preventDefault();
+   if(!$('snSearch').disabled)$('snSearch').click();
+   else notify('모델코드와 생산 순번 또는 16자리 S/N을 확인해 주세요.',true);
+  }
+ });
+ $('years').replaceChildren(...Array.from({length:100},(_,i)=>new Option(String(i).padStart(2,'0'),String(i).padStart(2,'0'))));
+
+ // An explicit editable combo box avoids browser-dependent datalist popups.
+ const popup=$('serialOptions');
+ const labels={fuse:'퓨즈',year:'연도',month:'월',day:'일'};
+ let openField=null,activeIndex=0;
+ function choices(id){
+  const source={fuse:'fuses',year:'years',month:'months',day:'days'}[id];
+  return Array.from($(source).options,option=>option.value);
+ }
+ function closeList(){
+  if(openField){$(openField).setAttribute('aria-expanded','false');$(openField).removeAttribute('aria-activedescendant');document.querySelector('.list-toggle[data-for="'+openField+'"]').setAttribute('aria-expanded','false');}
+  openField=null;popup.hidden=true;
+ }
+ function positionList(){
+  if(!openField)return;
+  const rect=$(openField).getBoundingClientRect();
+  if(rect.right<=0||rect.left>=innerWidth||rect.bottom<=0||rect.top>=innerHeight){closeList();return;}
+  const width=Math.max(84,rect.width+20);
+  const below=innerHeight-rect.bottom-12,above=rect.top-12;
+  const goDown=below>=150||below>=above;
+  const height=Math.min(224,Math.max(40,goDown?below:above));
+  popup.style.width=width+'px';popup.style.maxHeight=height+'px';
+  popup.style.left=Math.max(6,Math.min(rect.left,innerWidth-width-6))+'px';
+  popup.style.top=(goDown?rect.bottom+5:Math.max(6,rect.top-5-Math.min(height,popup.scrollHeight)))+'px';
+ }
+ function paintOptions(scroll=true){
+  if(!openField)return;
+  const vals=choices(openField);
+  activeIndex=Math.max(0,Math.min(vals.length-1,activeIndex));
+  const current=$(openField).value.toUpperCase().padStart(['year','day'].includes(openField)?2:1,'0');
+  popup.replaceChildren(...vals.map((value,index)=>{
+   const option=document.createElement('div');option.id='serialOption'+index;option.className='picker-option'+(index===activeIndex?' active':'');option.setAttribute('role','option');option.setAttribute('aria-selected',String(value===current));option.dataset.value=value;option.textContent=value;
+   option.addEventListener('pointerdown',event=>event.preventDefault());
+   option.addEventListener('click',()=>{const input=$(openField);closeList();input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();});
+   return option;
+  }));
+  $(openField).setAttribute('aria-activedescendant','serialOption'+activeIndex);
+  positionList();
+  if(scroll){const option=popup.children[activeIndex];if(option)popup.scrollTop=Math.max(0,option.offsetTop-popup.clientHeight/2+option.offsetHeight/2);}
+ }
+ function openList(id){
+  if(openField!==id)closeList();
+  openField=id;const input=$(id),vals=choices(id);
+  const current=input.value.toUpperCase().padStart(['year','day'].includes(id)?2:1,'0');
+  activeIndex=Math.max(0,vals.indexOf(current));popup.hidden=false;popup.setAttribute('aria-label',labels[id]+' 선택 목록');
+  input.setAttribute('aria-expanded','true');document.querySelector('.list-toggle[data-for="'+id+'"]').setAttribute('aria-expanded','true');
+  paintOptions();
+ }
+ for(const id of Object.keys(labels)){
+  const input=$(id),toggle=document.querySelector('.list-toggle[data-for="'+id+'"]');
+  toggle.addEventListener('pointerdown',event=>event.preventDefault());
+  toggle.addEventListener('click',()=>{if(openField===id)closeList();else{input.focus();openList(id);}});
+  input.addEventListener('click',()=>openList(id));
+  input.addEventListener('input',()=>{
+   if(openField===id){const vals=choices(id);activeIndex=Math.max(0,vals.indexOf(input.value.toUpperCase().padStart(['year','day'].includes(id)?2:1,'0')));paintOptions();}
+  });
+  input.addEventListener('keydown',event=>{
+   if(event.altKey)return;
+   if(event.key==='ArrowDown'||event.key==='ArrowUp'){
+    event.preventDefault();if(openField!==id){openList(id);return;}
+    const vals=choices(id);activeIndex=Math.max(0,Math.min(vals.length-1,activeIndex+(event.key==='ArrowDown'?1:-1)));paintOptions();
+   }else if(event.key==='Enter'&&openField===id){event.preventDefault();popup.children[activeIndex]?.click();}
+   else if(event.key==='Escape'&&openField){event.preventDefault();closeList();}
+   else if(event.key==='Tab')closeList();
+  });
+  input.addEventListener('blur',()=>{setTimeout(()=>{if(openField===id&&!input.closest('.combo').contains(document.activeElement))closeList();},0);});
+ }
+ document.addEventListener('pointerdown',event=>{if(openField&&!popup.contains(event.target)&&!$(openField).closest('.combo').contains(event.target))closeList();});
+ window.addEventListener('resize',positionList);
+ window.addEventListener('scroll',positionList,true);
+
+
+ const requestForm=document.getElementById('as-request-form');
+ function reportSerialValidity(){
+  stopSequenceHold();closeList();clearValidity();
+  const raw=$('serial').value;
+  const review=raw?SolisSerialRules.validate(raw):SolisSerialRules.validateParts(values());
+  if(review.valid){$('serial').value=review.serial;return true;}
+  const errors=review.errors;
+  errors.forEach(error=>{
+   const field=$(error.field)||$('serial');
+   touched.add(error.field);field.setAttribute('aria-invalid','true');field.setCustomValidity(error.message);field.setAttribute('aria-describedby','message');
+  });
+  $('serial').setCustomValidity(review.message);$('serial').setAttribute('aria-invalid','true');
+  notify('시리얼 번호를 확인해 주세요.\n'+review.message,true);
+  const target=$(errors[0].field)||$('serial');target.focus();target.reportValidity();
+  return false;
+ }
+ // Capture validation runs before the existing A/S uploader.
+ requestForm.addEventListener('submit',event=>{
+  if(!reportSerialValidity()){event.preventDefault();event.stopImmediatePropagation();}
+ },true);
+ requestForm.addEventListener('as:statechange',()=>{
+  const busy=requestForm.dataset.asBusy==='true';
+  if(busy){stopSequenceHold();closeList();}
+  document.querySelectorAll('.sn-widget input,.sn-widget button').forEach(control=>{control.disabled=busy;});
+  if(!busy)render();
+ });
+ requestForm.addEventListener('reset',()=>setTimeout(()=>{
+  stopSequenceHold();closeList();touched.clear();clearValidity();
+  for(const id of fields)$(id).value=id==='fuse'?'E':'';
+  $('serial').value='';render();
+  if(requestForm.dataset.asBusy==='true')document.querySelectorAll('.sn-widget input,.sn-widget button').forEach(control=>{control.disabled=true;});
+ },0));
+ render();
+
+})();
+
+</script>
+<script>
+
+(() => {
+ 'use strict';
+ const form=document.getElementById('as-request-form');
+ const picker=document.getElementById('symptom_type');
+ const symptoms=document.getElementById('symptoms');
+ const result=document.getElementById('request-result');
+ let selectedType='';
+ picker.addEventListener('change',()=>{
+  let text=symptoms.value;
+  const prefix=selectedType?'고장 유형: '+selectedType:'';
+  if(prefix&&(text===prefix||text.startsWith(prefix+'\n')))text=text.slice(prefix.length).replace(/^\n/,'');
+  const nextType=picker.value;
+  const nextText=[nextType?'고장 유형: '+nextType:'',text].filter(Boolean).join('\n');
+  if(nextText.length>symptoms.maxLength){picker.value=selectedType;result.textContent='증상란의 글자 수를 줄인 뒤 증상을 선택해 주세요.';return;}
+  selectedType=nextType;symptoms.value=nextText;
+  symptoms.dispatchEvent(new Event('input',{bubbles:true}));
+ });
+ form.addEventListener('reset',()=>{selectedType='';picker.value='';});
+})();
+</script>
+<script>
+// Existing A/S submission, idempotency and attachment handling.
+(() => {
+const form = document.getElementById('as-request-form');
+const button = form.querySelector('button[type="submit"]');
+const resultBox = document.getElementById('request-result');
+
+const attachments = document.getElementById('attachments');
+const camera = document.getElementById('camera-photo');
+const cameraButton = document.getElementById('camera-button');
+const fileList = document.getElementById('attachment-list');
+
+const selected = [];
+const maxSize = 10 * 1024 * 1024;
+
+let locked = false;
+let processing = false;
+
+let submissionKey = '';
+
+function getSubmissionKey() {
+  if (submissionKey) return submissionKey;
+
+  try {
+    submissionKey =
+      sessionStorage.getItem('as-submission-id') || '';
+  } catch {}
+
+  const valid =
+    /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
+
+  if (!valid.test(submissionKey)) {
+    submissionKey = crypto.randomUUID();
+
+    try {
+      sessionStorage.setItem(
+        'as-submission-id',
+        submissionKey
+      );
+    } catch {}
+  }
+
+  return submissionKey;
+}
+
+// 화면 너비 대신 브라우저의 휴대폰 정보를 사용
+const isPhone =
+  typeof navigator.userAgentData?.mobile === 'boolean'
+    ? navigator.userAgentData.mobile
+    : /Android.*Mobile|iPhone|iPod/i.test(navigator.userAgent);
+
+document.getElementById('mobile-camera').hidden = !isPhone;
+
+function updateButtons() {
+  button.disabled = locked || processing;
+  attachments.disabled = locked || processing;
+  camera.disabled = locked || processing;
+  cameraButton.disabled = locked || processing;
+  form.dataset.asBusy = String(locked || processing);
+  form.dispatchEvent(new CustomEvent('as:statechange', {
+    detail: { busy: locked || processing, locked }
+  }));
+}
+
+function renderFiles() {
+  fileList.replaceChildren();
+
+  for (const [index, item] of selected.entries()) {
+    const row = document.createElement('div');
+    row.className = 'attachment-item';
+
+    if (item.preview) {
+      const image = document.createElement('img');
+      image.src = item.preview;
+      image.alt = item.file.name + ' 미리보기';
+      row.append(image);
+    }
+
+    const name = document.createElement('span');
+
+    name.textContent =
+      item.file.name + ' (' +
+      (item.file.size / 1024 / 1024).toFixed(2) +
+      'MB)';
+
+    row.append(name);
+
+    const remove = document.createElement('button');
+
+    remove.type = 'button';
+    remove.textContent = '제거';
+    remove.disabled = locked || processing;
+    remove.setAttribute(
+      'aria-label',
+      item.file.name + ' 제거'
+    );
+
+    remove.onclick = () => {
+      if (locked || processing) return;
+
+      const [removed] = selected.splice(index, 1);
+
+      if (removed.preview) {
+        URL.revokeObjectURL(removed.preview);
+      }
+
+      renderFiles();
+    };
+
+    row.append(remove);
+    fileList.append(row);
+  }
+
+  const count = document.createElement('p');
+  count.className = 'form-help';
+  count.textContent =
+    '선택한 파일: ' + selected.length + ' / 5개';
+
+  fileList.append(count);
+}
+
+function addFiles(files) {
+  const additions = [];
+
+  for (const file of files) {
+    if (
+      !/\.(jpe?g|png|webp|pdf)$/i.test(file.name) ||
+      !file.size ||
+      file.size > maxSize
+    ) {
+      throw new Error(
+        'JPG·PNG·WebP·PDF만 가능하며, 파일당 최대 10MB입니다.'
+      );
+    }
+
+    const duplicate = [
+      ...selected.map(item => item.file),
+      ...additions
+    ].some(item =>
+      item.name === file.name &&
+      item.size === file.size &&
+      item.lastModified === file.lastModified
+    );
+
+    if (!duplicate) additions.push(file);
+  }
+
+  if (selected.length + additions.length > 5) {
+    throw new Error(
+      '촬영 사진과 선택 파일을 합해 최대 5개입니다.'
+    );
+  }
+
+  for (const file of additions) {
+    selected.push({
+      file,
+      preview: /\.(jpe?g|png|webp)$/i.test(file.name)
+        ? URL.createObjectURL(file)
+        : null
+    });
+  }
+
+  renderFiles();
+}
+
+async function cameraJpeg(file) {
+  const url = URL.createObjectURL(file);
+
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image();
+
+      img.onload = () => resolve(img);
+
+      img.onerror = () => reject(new Error(
+        '촬영 사진을 읽지 못했습니다. ' +
+        '카메라 저장 형식을 JPEG로 설정하거나 파일 선택을 이용하세요.'
+      ));
+
+      img.src = url;
+    });
+
+    // 촬영 사진은 긴 변 최대 2560px의 JPEG로 변환
+    const scale = Math.min(
+      1,
+      2560 / Math.max(image.naturalWidth, image.naturalHeight)
+    );
+
+    const canvas = document.createElement('canvas');
+
+    canvas.width = Math.max(
+      1,
+      Math.round(image.naturalWidth * scale)
+    );
+
+    canvas.height = Math.max(
+      1,
+      Math.round(image.naturalHeight * scale)
+    );
+
+    const context = canvas.getContext('2d');
+
+    if (!context) {
+      throw new Error(
+        '이 브라우저에서 사진 변환을 지원하지 않습니다.'
+      );
+    }
+
+    context.fillStyle = '#fff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(
+      image, 0, 0, canvas.width, canvas.height
+    );
+
+    const blob = await new Promise(resolve => {
+      canvas.toBlob(resolve, 'image/jpeg', 0.88);
+    });
+
+    if (!blob) {
+      throw new Error('사진을 JPEG로 변환하지 못했습니다.');
+    }
+
+    const stamp = new Date()
+      .toISOString()
+      .replace(/[-:.TZ]/g, '');
+
+    return new File(
+      [blob],
+      'AS-photo-' + stamp + '.jpg',
+      {
+        type: 'image/jpeg',
+        lastModified: Date.now()
+      }
+    );
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+// 일반 파일 선택
+attachments.addEventListener('change', () => {
+  if (locked || processing) return;
+
+  resultBox.textContent = '';
+
+  try {
+    addFiles(Array.from(attachments.files));
+  } catch (error) {
+    resultBox.textContent = error.message;
+  }
+
+  attachments.value = '';
+});
+
+// 카메라 열기
+cameraButton.addEventListener('click', () => {
+  if (locked || processing) return;
+
+  if (selected.length >= 5) {
+    resultBox.textContent =
+      '이미 5개를 선택했습니다. 파일을 제거한 뒤 촬영하세요.';
+    return;
+  }
+
+  camera.value = '';
+  camera.click();
+});
+
+// 촬영 사진 추가
+camera.addEventListener('change', async () => {
+  if (locked || processing || !camera.files.length) return;
+
+  const file = camera.files[0];
+
+  processing = true;
+  updateButtons();
+  renderFiles();
+
+  resultBox.textContent = '촬영한 사진을 준비하고 있습니다.';
+
+  try {
+    const converted = await cameraJpeg(file);
+    addFiles([converted]);
+
+    resultBox.textContent =
+      '사진을 추가했습니다. 필요하면 다시 촬영할 수 있습니다.';
+  } catch (error) {
+    resultBox.textContent = error.message;
+  } finally {
+    camera.value = '';
+    processing = false;
+
+    updateButtons();
+    renderFiles();
+  }
+});
+
+// 신청서 제출
+form.addEventListener('submit', async event => {
+  event.preventDefault();
+
+  if (locked || processing || !form.reportValidity()) return;
+
+  const count = selected.length;
+  const data = new FormData(form);
+
+  data.delete('attachments');
+
+  for (const item of selected) {
+    data.append('attachments', item.file);
+  }
+
+  data.set(
+    'privacy_agreed',
+    String(form.elements.privacy_agreed.checked)
+  );
+
+  locked = true;
+  updateButtons();
+  renderFiles();
+
+  button.textContent = '제출 중…';
+  resultBox.textContent = '사진과 신청 내용을 전송하고 있습니다.';
+
+  try {
+    const response = await fetch('/api/as-requests', {
+      method: 'POST',
+      headers: {
+        'X-Submission-Id': getSubmissionKey()
+      },
+      body: data
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      if (response.status >= 500) {
+        throw new Error('결과 확인 필요');
+      }
+
+      resultBox.textContent =
+        result.message || '입력 내용과 첨부파일을 확인하세요.';
+
+      locked = false;
+      return;
+    }
+
+    if (
+      typeof result.application_id !== 'string' ||
+      !/^\d+$/.test(result.application_id)
+    ) {
+      throw new Error('신청번호 확인 실패');
+    }
+
+    resultBox.textContent =
+      (result.duplicate
+        ? '이미 저장된 동일 요청입니다. 중복 등록하지 않았습니다.'
+        : '접수 요청이 제출되었습니다.') +
+      '\n신청 관리번호: ' + result.application_id +
+      '\n첨부파일: ' + count + '개\n' +
+      '관리자 검토 후 정식 접수됩니다.';
+
+    try {
+      sessionStorage.removeItem('as-submission-id');
+    } catch {}
+
+    submissionKey = '';
+
+    form.reset();
+
+    for (const item of selected) {
+      if (item.preview) URL.revokeObjectURL(item.preview);
+    }
+
+    selected.length = 0;
+    renderFiles();
+
+    button.textContent = '제출 완료';
+  } catch {
+    resultBox.textContent =
+      '제출 결과를 확인하지 못했습니다. ' +
+      '이미 저장되었을 수 있으므로 재제출 전에 관리자에게 확인해 주세요.';
+
+    button.textContent = '신청 확인 필요';
+  } finally {
+    updateButtons();
+    renderFiles();
+
+    if (!locked) {
+      button.textContent = 'A/S 접수 요청';
+    }
+  }
+});
+
+renderFiles();
+
+
+})();
+</script>
 </body>
 </html>
