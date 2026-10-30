@@ -122,6 +122,33 @@ function updateModule() {
   invalidate();
 }
 
+function updateInputGuidance() {
+  const byModules = document.querySelector('input[name="basis"]:checked').value === 'modules';
+  const steps = byModules
+    ? {manufacturer:'1 선택', moduleCount:'2 입력'}
+    : {plantCapacity:'1 입력', manufacturer:'2 선택', acVoltage:'3 선택'};
+  // Input order is conveyed by words and numbers as well as color.
+  for (const id of ['plantCapacity','manufacturer','moduleCount','acVoltage']) {
+    const control = $(id);
+    const label = document.querySelector('label[for="' + id + '"]');
+    const active = Object.hasOwn(steps,id);
+    control.classList.toggle('guided-input',active);
+    label.classList.toggle('guided-label',active);
+    const badge = label.querySelector('[data-input-badge]');
+    badge.hidden = !active;
+    if (active) badge.textContent = steps[id];
+    const automatic = label.querySelector('[data-auto-badge]');
+    if (automatic) automatic.hidden = !(id === 'plantCapacity' ? byModules : !byModules);
+    if (active) control.setAttribute('aria-describedby','inputGuidance');
+    else control.removeAttribute('aria-describedby');
+  }
+  $('moduleCount').readOnly = !byModules;
+  $('plantCapacity').readOnly = byModules;
+  setText('inputGuidance',byModules
+    ? '모듈 수량 기준 · 1 모듈 제조사 선택 → 2 모듈 수량 입력. 설비용량과 DC 합계는 자동 계산합니다.'
+    : '설비용량 기준 · 1 설비용량 입력 → 2 모듈 제조사 선택 → 3 인버터 AC 출력 선택. 모듈 수량과 DC 합계는 자동 계산합니다.');
+}
+
 function updateCount() {
   const m = selectedModule();
   if (!m) return;
@@ -2085,13 +2112,7 @@ function init() {
 
   document.querySelectorAll('input[name="basis"]').forEach(
     node => node.addEventListener('change', () => {
-      const byModules = document.querySelector(
-        'input[name="basis"]:checked'
-      ).value === 'modules';
-
-      $('moduleCount').readOnly = !byModules;
-      $('plantCapacity').readOnly = byModules;
-
+      updateInputGuidance();
       updateCount();
       invalidate();
     })
@@ -2168,6 +2189,7 @@ function init() {
   );
 
   voltageControls();
+  updateInputGuidance();
   applyDesignMode();
 }
 
