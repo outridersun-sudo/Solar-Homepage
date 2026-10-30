@@ -14,11 +14,14 @@ const app=require('../server');
   const base='http://127.0.0.1:'+server.address().port;
   const html=await page.goto(base+'/calculator.html');
   assert.match((await html.allHeaders())['cache-control'],/no-store/);
-  const script=await page.request.get(base+'/js/calculator.js?v=20261030-calculator-fix-r4');
+  const script=await page.request.get(base+'/js/calculator.js?v=20261030-default-a-r5');
   assert.match(script.headers()['cache-control'],/no-store/);
   assert.match(await script.text(),/function updateInputGuidance/);
   assert.equal((await initial).status(),200);
   await page.waitForFunction(()=>document.querySelectorAll('#planComparisonBody tr').length===3);
+  assert.equal(await page.locator('.choice[data-choice="A"]').getAttribute('aria-pressed'),'true');
+  assert.equal(await page.locator('.result-card[data-card="A"]').getAttribute('aria-pressed'),'true');
+  assert.equal(await page.locator('.choice[data-choice="B"]').getAttribute('aria-pressed'),'false');
   assert.equal(await page.inputValue('#vocMargin'),'5');assert.equal(await page.inputValue('#iscFactor'),'1.25');
   const assertGuidance=async(basis,expected)=>{
     assert.deepEqual(await page.locator('.guided-input').evaluateAll(nodes=>nodes.map(n=>n.id).sort()),expected.slice().sort());
@@ -96,13 +99,21 @@ const app=require('../server');
   await page.check('input[name="basis"][value="modules"]');
   await assertGuidance('modules',['manufacturer','moduleCount']);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  // If A is unavailable, an actual calculation must select the available B.
+  await page.check('input[name="basis"][value="capacity"]');
+  await page.fill('#plantCapacity','1');
+  const fallback=waitCalculation();await page.click('#runBtn');
+  const fallbackResult=await (await fallback).json();
+  assert.equal(fallbackResult.plans.A,null);
+  await page.waitForFunction(()=>document.querySelector('.result-card[data-card="B"]')?.getAttribute('aria-pressed')==='true');
+  assert.equal(await page.locator('.choice[data-choice="B"]').getAttribute('aria-pressed'),'true');
   // A stale backend must produce an actionable message instead of silent failure.
   await page.route('**/api/calculator/calculate',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({plans:{},input:{}})}));
   await page.click('#runBtn');
   await page.waitForFunction(()=>document.querySelector('#inputMessage')?.textContent.includes('서버가 이전 버전'));
   assert.match(await page.locator('#inputMessage').innerText(),/재시작/);
   assert.deepEqual(errors,[]);
-  console.log('PASS: basis-dependent input guidance, module-count calculation, browser defaults, module coefficient, automatic preset recalculation, request values, manual edits, A/B/C comparison, A details, mobile layout, cache headers, stale-backend message');
+  console.log('PASS: default A selection and B fallback, basis-dependent input guidance, module-count calculation, browser defaults, module coefficient, automatic preset recalculation, request values, manual edits, A/B/C comparison, A details, mobile layout, cache headers, stale-backend message');
  }finally{
   if(browser) await browser.close();
   await new Promise(resolve=>server.close(resolve));

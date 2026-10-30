@@ -81,3 +81,5 @@ node test/calculator-ui.cjs
 캐시 확인 방법은 `APPLY_CALCULATOR_KO.md`를 참고하세요.
 계산기 HTML과 JavaScript는 `Cache-Control: no-store`로 제공합니다.
 클라이언트와 계산 서버 버전이 맞지 않으면 서버 재시작 안내를 표시합니다.
+
+처음 계산기를 열면 A안을 기본 선택합니다. A안이 없는 조건은 B안을 표시하며, 사용자가 직접 고른 안은 이후 재계산에서도 가능한 경우 유지합니다.

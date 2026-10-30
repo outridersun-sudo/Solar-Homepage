@@ -7,8 +7,8 @@ const $ = id => document.getElementById(id);
 
 
 
-let currentChoice = 'B';
-let activeCard = 'B';
+let currentChoice = 'A';
+let activeCard = 'A';
 let toastTimer;
 let resultState = null;
 let calculationSequence = 0;
