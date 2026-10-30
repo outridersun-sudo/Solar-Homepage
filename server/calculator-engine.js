@@ -1,6 +1,7 @@
 'use strict';
 // 서버 전용: public 폴더 안에 넣지 마세요.
 const catalog = require('./calculator-data/modules.json');
+const {store:moduleStore} = require('./module-store');
 const INVERTERS = require('./calculator-data/inverters.json');
 function capacityPlans(input) {
   const {
@@ -302,7 +303,7 @@ function selectStringPlans(input, designs) {
 }
 
 function moduleDesignValues(module, input) {
-  const rearScale = input.rearIrradiance / 13.5;
+  const rearScale = input.rearIrradiance / (module.bnpiRearIrradiance || 13.5);
   const interpolate = (stc, bnpi) => stc + (bnpi - stc) * rearScale;
 
   const ref = {
@@ -734,7 +735,7 @@ function allocatePlant(plan, designs, input, exactWorkLimit = 20000000) {
 }
 
 
-function normalizeInput(body) {
+function normalizeInput(body, currentCatalog = moduleStore.catalog()) {
   const fail = () => { throw new Error('계산 입력값이나 제품 선택을 확인하세요.'); };
   if (!body || typeof body !== 'object' || Array.isArray(body)) fail();
   const text = key => {
@@ -745,8 +746,8 @@ function normalizeInput(body) {
   const series = text('series');
   const model = text('model');
   const own = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
-  if (!own(catalog, manufacturer) || !own(catalog[manufacturer], series)) fail();
-  const module = catalog[manufacturer][series].find(item => item.name === model);
+  if (!own(currentCatalog, manufacturer) || !own(currentCatalog[manufacturer], series)) fail();
+  const module = currentCatalog[manufacturer][series].find(item => item.name === model);
   if (!module) fail();
   const num = (key, min, max) => {
     const value = body[key];
@@ -778,8 +779,8 @@ function normalizeInput(body) {
   return input;
 }
 
-function calculate(body) {
-  const input = normalizeInput(body);
+function calculate(body, currentCatalog) {
+  const input = normalizeInput(body, currentCatalog);
   const designs = {};
   for (const inverter of INVERTERS) designs[inverter.kw] = preliminaryDesign(inverter, input.module, input);
   input.eligibleKw = INVERTERS.filter(inv => designs[inv.kw].eligible).map(inv => inv.kw);
@@ -796,6 +797,6 @@ module.exports = {calculate, normalizeInput, catalog, INVERTERS, selectStringFus
 
 const {isMainThread, parentPort, workerData} = require('node:worker_threads');
 if (!isMainThread && workerData?.calculatorJob) {
-  try { parentPort.postMessage({result:calculate(workerData.input)}); }
+  try { parentPort.postMessage({result:calculate(workerData.input,workerData.catalog)}); }
   catch (error) { parentPort.postMessage({error:error.message}); }
 }

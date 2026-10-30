@@ -14,7 +14,7 @@ const app=require('../server');
   const base='http://127.0.0.1:'+server.address().port;
   const html=await page.goto(base+'/calculator.html');
   assert.match((await html.allHeaders())['cache-control'],/no-store/);
-  const script=await page.request.get(base+'/js/calculator.js?v=20261030-plan-labels-r8');
+  const script=await page.request.get(base+'/js/calculator.js?v=20261030-module-catalog-r9');
   assert.match(script.headers()['cache-control'],/no-store/);
   assert.match(await script.text(),/function updateInputGuidance/);
   const initialResponse=await initial;

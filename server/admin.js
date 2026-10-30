@@ -242,6 +242,8 @@ module.exports = function registerAdmin(app, pool) {
 
   require('./review')(app, pool);
 
+  require('./admin-modules')(app);
+
   app.use('/api/admin', (err, req, res, next) => {
     if (res.headersSent) return next(err);
 

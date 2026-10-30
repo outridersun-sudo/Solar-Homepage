@@ -36,7 +36,9 @@ app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders(res, filename) {
     // Keep calculator markup and its interactive controls on the same release.
     if (filename === path.join(__dirname, 'public', 'calculator.html') ||
-        filename === path.join(__dirname, 'public', 'js', 'calculator.js')) {
+        filename === path.join(__dirname, 'public', 'js', 'calculator.js') ||
+        ['admin.html','admin-downloads.html','admin-modules.html','js/admin-modules.js','css/admin-modules.css']
+          .some(name=>filename===path.join(__dirname,'public',name))) {
       res.setHeader('Cache-Control', 'no-store');
     }
   }

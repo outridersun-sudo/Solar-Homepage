@@ -21,11 +21,16 @@
   },
   "homepage": "https://github.com/outridersun-sudo/Solar-Homepage#readme",
   "dependencies": {
+    "@napi-rs/canvas": "1.1.0",
     "dotenv": "^18.0.7",
     "express": "^5.3.0",
     "file-type": "^22.2.0",
     "mariadb": "^3.5.4",
     "multer": "^2.4.0",
-    "nodemailer": "^10.2.1"
+    "nodemailer": "^10.2.1",
+    "pdfjs-dist": "6.4.299"
+  },
+  "engines": {
+    "node": ">=22.13.0"
   }
 }

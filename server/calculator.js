@@ -1,6 +1,7 @@
 'use strict';
 const {Worker} = require('node:worker_threads');
-const {normalizeInput, catalog, INVERTERS} = require('./calculator-engine');
+const {normalizeInput, INVERTERS} = require('./calculator-engine');
+const {store:moduleStore} = require('./module-store');
 module.exports = app => {
   let active = 0;
   const clients = new Map();
@@ -14,12 +15,14 @@ module.exports = app => {
   // 계산기는 아래 API를 사용하고, 계산 알고리즘은 public 밖에서만 실행합니다.
   app.get('/api/calculator/catalog', (req, res) => {
     res.set('Cache-Control','no-store');
-    res.json({modules:catalog, inverters:INVERTERS});
+    try {res.json({modules:moduleStore.catalog(), inverters:INVERTERS});}
+    catch(error){res.status(503).json({message:error.message});}
   });
   app.post('/api/calculator/calculate', (req, res) => {
     res.set('Cache-Control','no-store');
-    try { normalizeInput(req.body); }
-    catch (error) { return res.status(400).json({message:error.message}); }
+    let catalog;
+    try { catalog=moduleStore.catalog();normalizeInput(req.body,catalog); }
+    catch (error) { return res.status(error.status||400).json({message:error.message}); }
     const key = req.ip || req.socket.remoteAddress;
     const now = Date.now();
     let client = clients.get(key);
@@ -33,7 +36,7 @@ module.exports = app => {
     let worker;
     try {
       worker = new Worker(require.resolve('./calculator-engine'), {
-        workerData:{calculatorJob:true,input:req.body}, resourceLimits:{maxOldGenerationSizeMb:128}
+        workerData:{calculatorJob:true,input:req.body,catalog}, resourceLimits:{maxOldGenerationSizeMb:128}
       });
     } catch (error) {
       active--;

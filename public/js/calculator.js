@@ -118,6 +118,7 @@ function updateModule() {
 
   $('modulePower').value = m.p;
   $('vmpCoefficient').value = m.betaVoc;
+  $('rearIrradiance').value = m.bnpiRearIrradiance || 13.5;
   updateCount();
   invalidate();
 }
@@ -480,11 +481,12 @@ function renderComparison() {
 
 function applyDesignMode() {
   const documentMode = $('designMode').value === 'document';
-  for (const [id,value] of Object.entries({minTemperature:-20,maxCellTemperature:40,rearIrradiance:13.5,
+  const rearReference = selectedModule()?.bnpiRearIrradiance || 13.5;
+  for (const [id,value] of Object.entries({minTemperature:-20,maxCellTemperature:40,rearIrradiance:rearReference,
     vocMargin:documentMode?0:5,iscFactor:1.25})) $(id).value=value;
   setText('profileNote', documentMode
-    ? '자료 재현 비교: −20~40℃, 후면 13.5%(BNPI), 저온 Voc는 STC 사양, 추가 여유 0%. 단락전류 계수는 1.25를 유지합니다. 이후 입력값을 바꾸면 변경 조건으로 계산합니다.'
-    : '기본 예비 설계: −20~40℃, 후면 13.5%(BNPI), Voc 여유 5%, 단락전류 계수 1.25. 실제 현장 조건은 별도 확인하세요.');
+    ? '자료 재현 비교: −20~40℃, 후면 '+rearReference+'%(BNPI), 저온 Voc는 STC 사양, 추가 여유 0%. 단락전류 계수는 1.25를 유지합니다. 이후 입력값을 바꾸면 변경 조건으로 계산합니다.'
+    : '기본 예비 설계: −20~40℃, 후면 '+rearReference+'%(BNPI), Voc 여유 5%, 단락전류 계수 1.25. 실제 현장 조건은 별도 확인하세요.');
   const module = selectedModule();
   if (module) $('vmpCoefficient').value = module.betaVoc;
   invalidate();
@@ -782,17 +784,18 @@ function renderVerification() {
   /*
    * 6. 양면 출력 보간 및 전류 온도 보정
    */
-  const rearScale = input.rearIrradiance / 13.5;
+  const rearReference = m.bnpiRearIrradiance || 13.5;
+  const rearScale = input.rearIrradiance / rearReference;
 
   let rearMethod;
 
   if (Math.abs(input.rearIrradiance) < 1e-10) {
     rearMethod = '후면 0%: STC 기준값';
   } else if (
-    Math.abs(input.rearIrradiance - 13.5) < 1e-10
+    Math.abs(input.rearIrradiance - rearReference) < 1e-10
   ) {
-    rearMethod = '후면 13.5%: 데이터시트 BNPI 기준값';
-  } else if (input.rearIrradiance < 13.5) {
+    rearMethod = '후면 '+rearReference+'%: 데이터시트 BNPI 기준값';
+  } else if (input.rearIrradiance < rearReference) {
     rearMethod = 'STC와 BNPI 사이의 선형 보간 추정';
   } else {
     rearMethod = 'BNPI 범위를 넘는 선형 외삽 추정';
@@ -801,7 +804,7 @@ function renderVerification() {
   const currentFactorExplanation =
     m.iscCoefficientUnconfirmed
       ? lines(
-          'TW Isc 온도계수 부호는 미확인입니다.',
+          '모듈 Isc 온도계수 부호는 미확인입니다.',
           '전류가 커지는 쪽으로 다음 계수를 적용합니다.',
           '1 + |Isc 계수 ÷ 100| × 최대 |설계온도 − 25|'
         )
@@ -816,14 +819,14 @@ function renderVerification() {
       '자료 근거: ' + m.source,
       '',
       'BNPI 기준 조건:',
-      '전면 1,000W/㎡ / 후면 135W/㎡ / 셀온도 25℃',
-      '후면 비율 = 135 ÷ 1,000 × 100 = 13.5%',
+      '전면 1,000W/㎡ 기준 후면 '+(rearReference*10)+'W/㎡ / 셀온도 25℃',
+      '후면 비율 = '+rearReference+'%',
       '',
       '입력 후면 일사율: ' + input.rearIrradiance + '%',
       '적용 방식: ' + rearMethod,
       '',
       '보간·외삽 비율 r:',
-      input.rearIrradiance + ' ÷ 13.5 = ' +
+      input.rearIrradiance + ' ÷ '+rearReference+' = ' +
       fixed(rearScale, 6),
       '',
       '일반 계산식:',
@@ -1867,8 +1870,8 @@ function unresolvedIssues(input) {
     '°·음영 없음으로 가정합니다. 방향별 일사량이나 음영 손실을 계산한 값은 아닙니다.',
 
     '후면 일사율 ' + input.rearIrradiance +
-    '%는 BNPI 후면 13.5%를 기준으로 STC↔BNPI를 선형 보간' +
-    (input.rearIrradiance > 13.5 ? '·외삽' : '') +
+    '%는 BNPI 후면 '+(input.module.bnpiRearIrradiance || 13.5)+'%를 기준으로 STC↔BNPI를 선형 보간' +
+    (input.rearIrradiance > (input.module.bnpiRearIrradiance || 13.5) ? '·외삽' : '') +
     '한 시나리오이며 현장 최대 일사 조건을 보장하지 않습니다.',
 
     'Voc 여유 ' + input.vocMargin +
@@ -1893,7 +1896,7 @@ function unresolvedIssues(input) {
 
   if (input.module.iscCoefficientUnconfirmed) {
     issues.push(
-      'TW Isc 온도계수 부호(-0.046%/℃)는 미확인입니다. ±0.046 범위 중 전류가 커지는 쪽으로 보수 추정했습니다.'
+      '모듈 Isc 온도계수 부호('+input.module.alphaIsc+'%/℃)는 미확인입니다. 계수 절댓값을 사용하여 전류가 커지는 쪽으로 보수 추정했습니다.'
     );
   }
 
@@ -1911,7 +1914,7 @@ function renderAssumptions() {
     input.maxCellTemperature +
     '℃ / Vmpp ' + input.vmpCoefficient +
     '%/℃(모듈 Voc 온도계수 임시 적용) / 후면 일사율 ' + input.rearIrradiance +
-    (input.rearIrradiance === 13.5 ? '%(BNPI 사양값 적용) / 방위 ' : '%(STC↔BNPI 선형 보간) / 방위 ') + input.azimuth +
+    (input.rearIrradiance === (input.module.bnpiRearIrradiance || 13.5) ? '%(BNPI 사양값 적용) / 방위 ' : '%(STC↔BNPI 선형 보간) / 방위 ') + input.azimuth +
     '°·경사 ' + input.tilt + '°·음영 없음'
   );
 
