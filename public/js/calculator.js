@@ -458,7 +458,10 @@ function applyDesignMode() {
   setText('profileNote', documentMode
     ? '자료 재현 비교: −20~40℃, 후면 13.5%(BNPI), 저온 Voc는 STC 사양, 추가 여유 0%. 단락전류 계수는 1.25를 유지합니다. 이후 입력값을 바꾸면 변경 조건으로 계산합니다.'
     : '기본 예비 설계: −20~40℃, 후면 13.5%(BNPI), Voc 여유 5%, 단락전류 계수 1.25. 실제 현장 조건은 별도 확인하세요.');
+  const module = selectedModule();
+  if (module) $('vmpCoefficient').value = module.betaVoc;
   invalidate();
+  return runCalculation(false);
 }
 
 function selectChoice(id) {
@@ -1875,7 +1878,7 @@ function renderAssumptions() {
     'assumptionSummary',
     (input.designMode === 'document' ? '자료 재현 비교 / ' : '기본 예비 설계 / ') +
     '저온 셀온도 ' + input.minTemperature +
-    '℃(최저 외기온도와 같다고 가정) / 고온 Vmpp 계산용 셀온도 ' +
+    '℃(최저 외기온도와 같다고 가정) / 고온 Vmpp 계산용 온도 ' +
     input.maxCellTemperature +
     '℃ / Vmpp ' + input.vmpCoefficient +
     '%/℃(모듈 Voc 온도계수 임시 적용) / 후면 일사율 ' + input.rearIrradiance +
@@ -2165,7 +2168,7 @@ function init() {
   );
 
   voltageControls();
-  runCalculation(false);
+  applyDesignMode();
 }
 
 
