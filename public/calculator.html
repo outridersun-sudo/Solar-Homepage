@@ -361,6 +361,15 @@ main>.verify{width:100%;margin-top:12px;min-height:0}
 .fuse-review[data-state="unconfirmed"] .fuse-result{color:#8a5c12;background:#fff7e6}
 .fuse-note{font-size:11px;line-height:1.75;color:#5c7596;margin:9px 0 0;overflow-wrap:anywhere}
 @media(max-width:600px){.fuse-review{padding:10px}.fuse-table th{width:95px}.fuse-table th,.fuse-table td{padding:8px;font-size:11px}}
+/* Input guidance switches with the calculation basis; text and badges supplement color. */
+.input-guidance{font-size:12px;color:#215da5;line-height:1.6;margin:0 0 12px}
+.field-label.guided-label{display:flex;flex-wrap:wrap;align-content:center;align-items:center;gap:4px 6px;align-self:stretch;min-height:40px;padding:6px;border-left:3px solid #2563eb;border-radius:6px;background:#eff6ff;color:#123f78}
+.form-control.guided-input{border:2px solid #2563eb;background:#eff6ff;color:#123f78;min-height:36px}
+.input-step{display:inline-flex;align-items:center;white-space:nowrap;border-radius:12px;background:#075bc7;color:#fff;font-size:10px;font-weight:800;padding:2px 7px;line-height:1.5}
+.auto-badge{display:inline-block;white-space:nowrap;border-radius:5px;background:#e7edf4;color:#50647e;font-size:10px;font-weight:700;padding:2px 5px;line-height:1.5}
+.input-step[hidden],.auto-badge[hidden]{display:none}
+.form-control:focus-visible{outline:2px solid #075bc7;outline-offset:2px}
+.choose-tabs .choice{white-space:normal;overflow-wrap:anywhere;line-height:1.4;min-height:40px}
 </style>
 </head>
 <body>
@@ -414,6 +423,7 @@ main>.verify{width:100%;margin-top:12px;min-height:0}
     <h2 id="input-title">기본 입력 조건</h2>
    </div>
 
+   <p id="inputGuidance" class="input-guidance" aria-live="polite">설비용량 기준 · 파란 항목부터 입력·선택해 주세요.</p>
    <div class="form-grid">
     <div class="field-label">계산 기준</div>
     <div class="radio-row">
@@ -421,10 +431,10 @@ main>.verify{width:100%;margin-top:12px;min-height:0}
      <label><input type="radio" name="basis" value="modules">모듈 수량 기준</label>
     </div>
 
-    <label class="field-label" for="plantCapacity">설비용량 (kWp)</label>
+    <label class="field-label" for="plantCapacity"><span class="input-step" data-input-badge hidden>1 입력</span><span>설비용량 (kWp)</span><span class="auto-badge" data-auto-badge hidden>자동 계산</span></label>
     <input class="form-control" id="plantCapacity" type="number" min="1" max="100000" step="0.01" value="400">
 
-    <label class="field-label" for="manufacturer">모듈 제조사</label>
+    <label class="field-label" for="manufacturer"><span class="input-step" data-input-badge hidden>2 선택</span><span>모듈 제조사</span></label>
     <select class="form-control" id="manufacturer"></select>
 
     <label class="field-label" for="series">모듈 시리즈</label>
@@ -439,19 +449,19 @@ main>.verify{width:100%;margin-top:12px;min-height:0}
      <span class="unit">Wp</span>
     </div>
 
-    <label class="field-label" for="moduleCount">모듈 수량</label>
+    <label class="field-label" for="moduleCount"><span class="input-step" data-input-badge hidden>2 입력</span><span>모듈 수량</span><span class="auto-badge" data-auto-badge hidden>자동 계산</span></label>
     <div class="flex-inline">
      <input class="form-control" id="moduleCount" type="number" min="1" max="50000000" step="1" readonly>
      <span class="unit">장</span>
     </div>
 
-    <label class="field-label" for="actualDcPower">실제 모듈 DC 합계</label>
+    <label class="field-label" for="actualDcPower">실제 모듈 DC 합계 <span class="auto-badge">자동 계산</span></label>
     <div class="flex-inline">
      <input class="form-control" id="actualDcPower" readonly>
      <span class="unit">kWp</span>
     </div>
 
-    <label class="field-label" for="acVoltage">인버터 AC 출력</label>
+    <label class="field-label" for="acVoltage"><span class="input-step" data-input-badge hidden>3 선택</span><span>인버터 AC 출력</span></label>
     <select class="form-control" id="acVoltage">
      <option value="380">380V · 150 / 110 / 60 / 36kW 조합</option>
      <option value="800">800V · 350kW 동일 모델 여러 대</option>
@@ -489,8 +499,8 @@ main>.verify{width:100%;margin-top:12px;min-height:0}
    <p class="form-message">자동 선정 필수: 전체 모듈 STC 기준 AC/DC &gt; 1.00. 같은 값과 작은 값은 제외합니다. 목표 비율·편차와 동시에 맞는 안이 없으면 A/C는 표시하지 않습니다.</p>
 
    <div class="choose-tabs" role="group" aria-label="인버터 조합 선정 방식">
-    <button type="button" class="choice" data-choice="A" aria-pressed="false">A안 최소 대수·스트링 우선</button>
-    <button type="button" class="choice" data-choice="B" aria-pressed="true">B안 목표 용량 근접</button>
+    <button type="button" class="choice" data-choice="A" aria-pressed="true">A안 최소 대수·스트링 우선</button>
+    <button type="button" class="choice" data-choice="B" aria-pressed="false">B안 목표 용량 근접</button>
     <button type="button" class="choice" data-choice="C" aria-pressed="false">C안 균형안</button>
    </div>
 
@@ -718,6 +728,6 @@ main>.verify{width:100%;margin-top:12px;min-height:0}
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script src="js/calculator.js?v=20261030-design-presets2" defer></script>
+<script src="js/calculator.js?v=20261030-default-a-r5" defer></script>
 </body>
 </html>
