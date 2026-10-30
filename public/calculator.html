@@ -101,6 +101,11 @@ main.shell{position:relative;margin-top:24px;padding-bottom:55px;z-index:2}
 .result-stats>div:not(:last-child){border-right:1px solid #ccdeee}
 .result-stats small{display:block;font-size:10px;color:#52709a;margin-bottom:4px;white-space:nowrap}
 .result-stats strong{display:block;font-size:13px;color:#1a4279;white-space:nowrap}
+.comparison-scroll{overflow-x:auto;margin-top:16px}
+.comparison-table{width:100%;border-collapse:collapse;font-size:12px;text-align:left}
+.comparison-table caption{text-align:left;font-weight:700;padding:8px 0}
+.comparison-table th,.comparison-table td{padding:10px;border:1px solid #dbe7f4;min-width:75px}
+.comparison-table th{background:#edf5ff}
 .result-note{font-size:10.5px;color:#7a90a7;margin:9px 0 0;line-height:1.55}
 .result-voltage{font-size:11px;line-height:1.6;color:#526c8b;margin:0 0 9px}
 .empty-state{font-size:13px;line-height:1.7;color:#647a99}
@@ -484,9 +489,9 @@ main>.verify{width:100%;margin-top:12px;min-height:0}
    <p class="form-message">자동 선정 필수: 전체 모듈 STC 기준 AC/DC &gt; 1.00. 같은 값과 작은 값은 제외합니다. 목표 비율·편차와 동시에 맞는 안이 없으면 A/C는 표시하지 않습니다.</p>
 
    <div class="choose-tabs" role="group" aria-label="인버터 조합 선정 방식">
-    <button type="button" class="choice" data-choice="A" aria-pressed="false">A안 최소 대수</button>
-    <button type="button" class="choice" data-choice="B" aria-pressed="true">B안 비율 근접</button>
-    <button type="button" class="choice" data-choice="C" aria-pressed="false">C안 균형형</button>
+    <button type="button" class="choice" data-choice="A" aria-pressed="false">A안 최소 대수·스트링 우선</button>
+    <button type="button" class="choice" data-choice="B" aria-pressed="true">B안 목표 용량 근접</button>
+    <button type="button" class="choice" data-choice="C" aria-pressed="false">C안 균형안</button>
    </div>
 
    <button type="button" class="run-btn" id="runBtn">
@@ -551,8 +556,15 @@ main>.verify{width:100%;margin-top:12px;min-height:0}
 
  <section class="panel top-panel design-panel" aria-labelledby="design-title">
   <div class="panel-head"><h2 id="design-title">예비 설계 조건 · 가정값</h2></div>
-  <p class="design-note">BNPI는 전면 1,000W/㎡·후면 135W/㎡ 조건입니다. 후면 일사율 10%는 후면 100W/㎡에 해당하며, STC↔BNPI를 선형 보간합니다. BNPI에 같은 이득을 중복 가산하지 않습니다. AC/DC 비율의 DC는 STC 용량을 사용합니다.</p>
+  <p class="design-note">BNPI는 전면 1,000W/㎡·후면 135W/㎡ 조건입니다. 기본 후면 일사율 13.5%에서는 모듈의 BNPI 사양값을 적용하며, 다른 비율에서는 STC↔BNPI를 선형 보간합니다. BNPI에 같은 이득을 중복 가산하지 않습니다. AC/DC 비율의 DC는 STC 용량을 사용합니다.</p>
 
+  <label class="preview-selector" for="designMode">설계 조건 설정
+   <select class="form-control" id="designMode">
+    <option value="standard">기본 예비 설계 · Voc 여유 5% / 단락전류 계수 1.25</option>
+    <option value="document">자료 재현 비교 · Voc 여유 0% / 저온 Voc는 STC 사양</option>
+   </select>
+  </label>
+  <p id="profileNote" class="design-note">기본값: 셀온도 −20~40℃, 후면 13.5%(BNPI), Voc 여유 5%, 단락전류 계수 1.25. 자료 재현 설정은 비교용이며 최종 설계 승인 조건이 아닙니다.</p>
   <div class="assumption-grid">
    <label for="minTemperature">
     현장 설계 최저온도 (℃)
@@ -561,21 +573,21 @@ main>.verify{width:100%;margin-top:12px;min-height:0}
    </label>
 
    <label for="maxCellTemperature">
-    최고 설계 셀온도 (℃)
-    <input class="form-control" id="maxCellTemperature" type="number" min="25" max="90" step="1" value="70" required>
-    <small>외기온도가 아닌 셀온도</small>
+    고온 Vmpp 계산용 셀온도 (℃)
+    <input class="form-control" id="maxCellTemperature" type="number" min="25" max="90" step="1" value="40" required>
+    <small>기본 40℃: 업로드 자료의 고온 Vmp 계산 조건을 셀온도로 가정 · 실제 현장 셀온도는 별도 확인</small>
    </label>
 
    <label for="vmpCoefficient">
     Vmpp 온도계수 (%/℃)
-    <input class="form-control" id="vmpCoefficient" type="number" min="-0.6" max="-0.1" step="0.01" value="-0.35" required>
-    <small>제조사값 미제공 · 예비 가정</small>
+    <input class="form-control" id="vmpCoefficient" type="number" min="-0.6" max="-0.1" step="0.01" value="-0.25" readonly required>
+    <small>선택 모듈 사양의 Voc 온도계수 자동 반영 · Vmpp에 임시 사용</small>
    </label>
 
    <label for="rearIrradiance">
     후면 일사율 (%)
-    <input class="form-control" id="rearIrradiance" type="number" min="0" max="30" step="0.5" value="10" required>
-    <small>전면 대비 비율 · BNPI 기준 13.5%</small>
+    <input class="form-control" id="rearIrradiance" type="number" min="0" max="30" step="0.5" value="13.5" required>
+    <small>기본 13.5%: BNPI 사양값 적용 · 전면 1,000W/㎡ / 후면 135W/㎡</small>
    </label>
 
    <label for="vocMargin">
@@ -603,6 +615,7 @@ main>.verify{width:100%;margin-top:12px;min-height:0}
    </label>
   </div>
 
+  <p class="design-note">배분 우선순위: 전압·전류 제한 및 인버터별 STC DC ≤ AC 정격 → 미배분 최소화 → 긴 직렬 우선 → 인버터별 DC/AC 비율 균등화 → MPPT 부하 균등화. 같은 MPPT에는 동일 직렬 수만 연결합니다. 설비용량 기준 모듈 수는 내림합니다. 대규모 설비는 제한된 재배분 탐색을 사용합니다.</p>
   <p id="assumptionSummary" class="design-note" aria-live="polite"></p>
 
   <details>
@@ -651,6 +664,14 @@ main>.verify{width:100%;margin-top:12px;min-height:0}
   </div>
 
   <div class="result-grid" id="results" aria-live="polite"></div>
+  <div class="comparison-scroll">
+   <table class="comparison-table" aria-label="A B C 구성안 비교">
+    <caption>구성·용량비·스트링·모듈 배분 비교</caption>
+    <thead><tr><th scope="col">안</th><th scope="col">인버터 구성</th><th scope="col">AC 합계</th><th scope="col">AC/DC</th><th scope="col">직렬별 스트링</th><th scope="col">총 스트링</th><th scope="col">연결 / 미배분</th></tr></thead>
+    <tbody id="planComparisonBody"></tbody>
+   </table>
+  </div>
+  <p id="comparisonWarnings" class="design-note" aria-live="polite"></p>
   <p id="excludedModels" class="design-note" aria-live="polite"></p>
   <p class="result-note" id="resultNote">350kW(800V)는 동일 모델끼리만, 150·110·60·36kW(380V)는 서로 조합합니다.</p>
  </section>

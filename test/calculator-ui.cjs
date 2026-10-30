@@ -1,0 +1,50 @@
+'use strict';
+const assert=require('node:assert/strict');
+const {chromium}=require('playwright');
+const app=require('../server');
+(async()=>{
+ const server=await new Promise(resolve=>{const s=app.listen(3000,'127.0.0.1',()=>resolve(s));});
+ let browser;
+ try {
+  browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '/usr/bin/chromium',args:['--no-sandbox']});
+  const page=await browser.newPage();
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  const waitCalculation=()=>page.waitForResponse(r=>r.url().endsWith('/api/calculator/calculate')&&r.request().method()==='POST',{timeout:30000});
+  const initial=waitCalculation();
+  await page.goto('http://127.0.0.1:'+server.address().port+'/calculator.html');
+  assert.equal((await initial).status(),200);
+  await page.waitForFunction(()=>document.querySelectorAll('#planComparisonBody tr').length===3);
+  assert.equal(await page.inputValue('#vocMargin'),'5');assert.equal(await page.inputValue('#iscFactor'),'1.25');
+  await page.selectOption('#series','NJ-ES 시리즈');
+  await page.selectOption('#model','HiS-T645NJ-ES');
+  assert.equal(await page.inputValue('#vmpCoefficient'),'-0.25');
+  await page.fill('#plantCapacity','500');
+  await page.selectOption('#designMode','document');
+  assert.equal(await page.locator('#planComparisonBody tr').count(),0);
+  assert.equal(await page.inputValue('#vocMargin'),'0');assert.equal(await page.inputValue('#rearIrradiance'),'13.5');
+  const doc=waitCalculation();await page.click('#runBtn');
+  const documentResult=await (await doc).json();
+  assert.deepEqual(documentResult.plans.A.metrics.strings,{'14':5,'15':47});
+  await page.waitForFunction(()=>document.querySelector('#planComparisonBody')?.textContent.includes('15직렬 47개'));
+  await page.click('.result-card[data-card="A"]');
+  await page.check('#showVerificationDetails');
+  assert.match(await page.locator('#verifyBody').innerText(),/STC Voc 사용/);
+  assert.match(await page.locator('#comparisonWarnings').innerText(),/자료 재현/);
+  await page.selectOption('#designMode','standard');
+  assert.equal(await page.inputValue('#vocMargin'),'5');assert.equal(await page.inputValue('#iscFactor'),'1.25');
+  const standard=waitCalculation();await page.click('#runBtn');
+  const result=await (await standard).json();
+  assert.deepEqual(result.plans.A.metrics.strings,{'13':9,'14':47});
+  await page.waitForFunction(()=>document.querySelector('#planComparisonBody')?.textContent.includes('14직렬 47개'));
+  assert.match(await page.locator('#comparisonWarnings').innerText(),/1012.41V/);
+  await page.setViewportSize({width:390,height:844});
+  assert.ok(await page.locator('#planComparisonBody').isVisible());
+  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
+  assert.equal(overflow,false,'mobile page should not overflow horizontally');
+  assert.deepEqual(errors,[]);
+  console.log('PASS: browser defaults, module coefficient, preset switching, invalidation, A/B/C comparison, A details, mobile layout');
+ }finally{
+  if(browser) await browser.close();
+  await new Promise(resolve=>server.close(resolve));
+ }
+})().then(()=>process.exit(0)).catch(error=>{console.error(error);process.exit(1)});
