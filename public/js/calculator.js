@@ -349,8 +349,8 @@ function invalidate() {
 
 const TITLES = {
   A: 'A안 최소 대수·스트링 우선',
-  B: 'B안 목표 용량 근접',
-  C: 'C안 균형안'
+  B: 'B안 전량 배분·용량 근접',
+  C: 'C안 용량·대수·스트링 균형'
 };
 
 function planName(plan) {
