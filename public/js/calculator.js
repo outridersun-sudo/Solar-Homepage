@@ -117,6 +117,7 @@ function updateModule() {
   }
 
   $('modulePower').value = m.p;
+  $('vmpCoefficient').value = m.betaVoc;
   updateCount();
   invalidate();
 }
@@ -134,7 +135,7 @@ function updateCount() {
 
     $('moduleCount').value =
       Number.isFinite(target) && target > 0
-        ? Math.max(1, Math.round(target * 1000 / m.p))
+        ? Math.max(1, Math.floor(target * 1000 / m.p + 1e-10))
         : '';
   } else {
     const n = Number($('moduleCount').value);
@@ -196,6 +197,7 @@ function readInput() {
   }
 
   const input = {
+    designMode: $('designMode').value,
     basis: document.querySelector(
       'input[name="basis"]:checked'
     ).value,
@@ -255,7 +257,7 @@ function readInput() {
 
 function signature() {
   const ids = [
-    'plantCapacity', 'moduleCount', 'ratio', 'ratioTolerance',
+    'designMode', 'plantCapacity', 'moduleCount', 'ratio', 'ratioTolerance',
     'acVoltage', 'rating350', 'pf350', 'priority',
     'manufacturer', 'series', 'model',
     'minTemperature', 'maxCellTemperature', 'vmpCoefficient',
@@ -282,6 +284,8 @@ function invalidate() {
     )
   );
 
+  $('planComparisonBody').replaceChildren();
+  setText('comparisonWarnings', '');
   $('verifyBody').replaceChildren();
   $('unconfirmedList').replaceChildren();
   $('inverterPreview').replaceChildren();
@@ -304,7 +308,7 @@ function invalidate() {
   );
   setText(
     'inputMessage',
-    '모듈 장수는 반올림하며, STC 모듈 합계로 AC/DC 비율을 계산합니다.'
+    '설비용량 기준 모듈 장수는 내림하며, STC 모듈 합계로 AC/DC 비율을 계산합니다.'
   );
   setText(
     'resultNote',
@@ -317,9 +321,9 @@ function invalidate() {
 }
 
 const TITLES = {
-  A: 'A안 최소 대수',
-  B: 'B안 비율 근접',
-  C: 'C안 균형형'
+  A: 'A안 최소 대수·스트링 우선',
+  B: 'B안 목표 용량 근접',
+  C: 'C안 균형안'
 };
 
 function planName(plan) {
@@ -410,12 +414,54 @@ function renderResults() {
         stats.append(item);
       }
 
-      button.append(stats);
+      button.append(stats, element('p', plan.reason, 'result-note'));
       button.addEventListener('click', () => selectChoice(id));
     }
 
     grid.append(button);
   }
+  renderComparison();
+}
+
+function renderComparison() {
+  const body = $('planComparisonBody');
+  body.replaceChildren();
+  for (const id of ['A','B','C']) {
+    const plan = resultState.plans[id];
+    const row = element('tr');
+    const metrics = plan?.metrics;
+    const strings = metrics ? Object.entries(metrics.strings).sort((a,b) => Number(b[0])-Number(a[0]))
+      .map(([series,count]) => series + '직렬 ' + count + '개').join(' + ') : '—';
+    const values = [TITLES[id], plan ? planName(plan) : '전량 연결·허용 편차 충족안 없음',
+      plan ? asNumber(plan.acKW) + 'kW' : '—', plan ? (plan.actualRatio*100).toFixed(2)+'%' : '—',
+      strings, metrics ? metrics.totalStrings+'개' : '—',
+      metrics ? metrics.allocated+'장 / '+metrics.unallocated+'장' : '—'];
+    values.forEach(value => row.append(element('td',value)));
+    body.append(row);
+  }
+  const {input, values, designs, selection} = resultState;
+  const design = designs[input.voltage === 800 ? 350 : 150];
+  const note = input.designMode === 'document'
+    ? '자료 재현 비교: 저온 Voc는 STC 사양을 사용합니다. Vmpp·전류는 입력한 후면 일사율에 따라 계산합니다. 기본 예비 설계와 기준이 다릅니다.'
+    : '기본 예비 설계: 후면 일사율을 반영한 Voc에 저온 보정과 추가 여유율을 적용합니다.';
+  setText('comparisonWarnings', note + '\n' + input.module.name + ' / 셀온도 ' + input.minTemperature + '~' +
+    input.maxCellTemperature + '℃ / 후면 ' + input.rearIrradiance + '% / Voc 여유 ' + input.vocMargin +
+    '% / 단락전류 계수 ' + input.iscFactor + '\n15직렬 저온 Voc(여유 포함): ' +
+    (values.vocWithMargin*15).toFixed(2) + 'V' + (design ? ' / '+design.inverter.kw+'kW의 허용 직렬 범위 '+design.minSeries+'~'+design.maxSeries+'장' : '') +
+    '\n' + selection.note + ' 평가 후보 '+selection.evaluated+'개.');
+}
+
+function applyDesignMode() {
+  const documentMode = $('designMode').value === 'document';
+  for (const [id,value] of Object.entries({minTemperature:-20,maxCellTemperature:40,rearIrradiance:13.5,
+    vocMargin:documentMode?0:5,iscFactor:1.25})) $(id).value=value;
+  setText('profileNote', documentMode
+    ? '자료 재현 비교: −20~40℃, 후면 13.5%(BNPI), 저온 Voc는 STC 사양, 추가 여유 0%. 단락전류 계수는 1.25를 유지합니다. 이후 입력값을 바꾸면 변경 조건으로 계산합니다.'
+    : '기본 예비 설계: −20~40℃, 후면 13.5%(BNPI), Voc 여유 5%, 단락전류 계수 1.25. 실제 현장 조건은 별도 확인하세요.');
+  const module = selectedModule();
+  if (module) $('vmpCoefficient').value = module.betaVoc;
+  invalidate();
+  return runCalculation(false);
 }
 
 function selectChoice(id) {
@@ -823,11 +869,9 @@ function renderVerification() {
   add(
     '저온 Voc',
     lines(
-      '25℃ 기준 양면 보정 Voc:',
-      fixed(m.voc) + ' + (' +
-      fixed(m.bnpiVoc) + ' − ' +
-      fixed(m.voc) + ') × ' +
-      fixed(rearScale, 6),
+      input.designMode === 'document' ? '자료 재현: 25℃ STC Voc 사용' : '25℃ 기준 양면 보정 Voc:',
+      input.designMode === 'document' ? fixed(m.voc) + 'V/장 (후면 보정 없이 자료의 기준 적용)' :
+        fixed(m.voc) + ' + (' + fixed(m.bnpiVoc) + ' − ' + fixed(m.voc) + ') × ' + fixed(rearScale, 6),
       '= ' + fixed(values.voc) + 'V/장',
       '',
       'Voc 온도계수: ' + m.betaVoc + '%/℃',
@@ -915,7 +959,7 @@ function renderVerification() {
       '',
       '적용 Vmpp 온도계수: ' +
       input.vmpCoefficient + '%/℃',
-      '제조사 확정값이 아닌 화면 입력 가정입니다.',
+      '선택 모듈의 Voc 온도계수를 Vmpp에 임시 적용한 예비 추정입니다.',
       '',
       '고온 Vmpp:',
       fixed(values.vmp) +
@@ -1172,7 +1216,9 @@ function renderVerification() {
       '③ 전체 배분 완료 조건: 미배분 0장',
       '',
       '미배분이 남으면 현재 구성·전압·전류 가정에서 전체 모듈이 연결되지 않은 것입니다.',
-      '배분 탐색이 모든 가능한 조합의 최적해를 보장하지는 않습니다.'
+      allocation.optimization === 'global'
+        ? '선택된 인버터 구성에서 전역 배분 탐색: 긴 직렬 우선 → DC/AC 비율 균등화 → MPPT 부하 균등화.'
+        : '대규모 설비는 제한된 재배분 탐색으로 계산하며 전역 최적해를 보장하지 않습니다.'
     ),
     allocationComplete ? 'ok' : 'error',
     allocationComplete
@@ -1315,8 +1361,9 @@ function renderVerification() {
       '25℃ Imp 추정: ' + fixed(values.imp) + 'A',
       '온도 보정 Imp 추정: ' + fixed(values.impDesign) + 'A'
     ),
-    '저온 Voc': groupedResult(group =>
-      '저온 Voc (여유 포함): ' + fixed(group.series * values.vocWithMargin) + 'V'
+    '저온 Voc': lines(
+      input.designMode === 'document' ? '자료 재현: STC Voc 사용' : '후면 일사율을 반영한 Voc 사용',
+      groupedResult(group => '저온 Voc (여유 포함): ' + fixed(group.series * values.vocWithMargin) + 'V')
     ),
     '고온·저온 Vmpp': groupedResult(group => lines(
       '고온 Vmpp: ' + fixed(group.series * values.vmpHot) + 'V',
@@ -1673,9 +1720,9 @@ async function runCalculation(scroll = true) {
     setText(
       'resultNote',
       '공통 필수 조건: 전체 모듈 STC 기준 AC/DC > 1.00(동일값 제외). ' +
-      'A: 허용 편차 내 최소 대수 / ' +
+      'A: 전량 연결·허용 편차 충족 후보 중 최소 대수·긴 직렬·스트링 수 우선 / ' +
       'B: 목표 AC/DC 최근접(편차 초과 시 경고) / ' +
-      'C: 비율 오차·대수 종합. ' +
+      'C: 정규화 용량 오차 40%·대수 30%·스트링 수 30% 종합. ' +
       '예비 전압·전류 조건을 통과한 모델만 비교합니다. ' +
       'A~C가 같을 수 있습니다. ' +
       '카드의 계획 AC/DC는 전체 모듈 기준입니다. ' +
@@ -1777,7 +1824,7 @@ function linkQuote() {
 function unresolvedIssues(input) {
   const issues = [
     'Vmpp 온도계수 ' + input.vmpCoefficient +
-    '%/℃는 제조사 확정값이 아닌 예비 가정입니다.',
+    '%/℃는 모듈 사양의 Voc 온도계수를 임시 적용한 값이며 Vmpp 확정값이 아닙니다.',
 
     'Imp 온도계수는 미제공으로 Isc 계수를 대신 사용한 예비 추정입니다.',
 
@@ -1829,12 +1876,13 @@ function renderAssumptions() {
 
   setText(
     'assumptionSummary',
+    (input.designMode === 'document' ? '자료 재현 비교 / ' : '기본 예비 설계 / ') +
     '저온 셀온도 ' + input.minTemperature +
-    '℃(최저 외기온도와 같다고 가정) / 최고 셀온도 ' +
+    '℃(최저 외기온도와 같다고 가정) / 고온 Vmpp 계산용 온도 ' +
     input.maxCellTemperature +
     '℃ / Vmpp ' + input.vmpCoefficient +
-    '%/℃(가정) / 후면 일사율 ' + input.rearIrradiance +
-    '% / 방위 ' + input.azimuth +
+    '%/℃(모듈 Voc 온도계수 임시 적용) / 후면 일사율 ' + input.rearIrradiance +
+    (input.rearIrradiance === 13.5 ? '%(BNPI 사양값 적용) / 방위 ' : '%(STC↔BNPI 선형 보간) / 방위 ') + input.azimuth +
     '°·경사 ' + input.tilt + '°·음영 없음'
   );
 
@@ -1974,6 +2022,7 @@ function connectionSvg(mppt) {
 }
 
 function init() {
+  $('designMode').addEventListener('change', applyDesignMode);
   const detailToggle = $('showVerificationDetails');
   detailToggle.checked = false;
   detailToggle.addEventListener('change', () => {
@@ -2119,7 +2168,7 @@ function init() {
   );
 
   voltageControls();
-  runCalculation(false);
+  applyDesignMode();
 }
 
 
