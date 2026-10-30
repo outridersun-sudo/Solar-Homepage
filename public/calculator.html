@@ -571,10 +571,10 @@ main>.verify{width:100%;margin-top:12px;min-height:0}
   <label class="preview-selector" for="designMode">설계 조건 설정
    <select class="form-control" id="designMode">
     <option value="standard">기본 예비 설계 · Voc 여유 5% / 단락전류 계수 1.25</option>
-    <option value="document">자료 재현 비교 · Voc 여유 0% / 저온 Voc는 STC 사양</option>
+    <option value="document" selected>자료 재현 비교 · Voc 여유 0% / 저온 Voc는 STC 사양</option>
    </select>
   </label>
-  <p id="profileNote" class="design-note">기본값: 셀온도 −20~40℃, 후면 13.5%(BNPI), Voc 여유 5%, 단락전류 계수 1.25. 자료 재현 설정은 비교용이며 최종 설계 승인 조건이 아닙니다.</p>
+  <p id="profileNote" class="design-note">초기 선택: 자료 재현 비교 · 온도 −20~40℃, 후면 13.5%(BNPI), 저온 Voc는 STC 사양, Voc 여유 0%, 단락전류 계수 1.25. 자료 재현 설정은 비교용이며 최종 설계 승인 조건이 아닙니다.</p>
   <div class="assumption-grid">
    <label for="minTemperature">
     현장 설계 최저온도 (℃)
@@ -602,7 +602,7 @@ main>.verify{width:100%;margin-top:12px;min-height:0}
 
    <label for="vocMargin">
     Voc 검토 여유 (%)
-    <input class="form-control" id="vocMargin" type="number" min="0" max="10" step="0.5" value="5" required>
+    <input class="form-control" id="vocMargin" type="number" min="0" max="10" step="0.5" value="0" required>
     <small>저온 Voc에 추가하는 예비 여유</small>
    </label>
 
@@ -728,6 +728,6 @@ main>.verify{width:100%;margin-top:12px;min-height:0}
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script src="js/calculator.js?v=20261030-default-a-r5" defer></script>
+<script src="js/calculator.js?v=20261030-default-document-r6" defer></script>
 </body>
 </html>
