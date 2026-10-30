@@ -72,3 +72,12 @@ node test/calculator-ui.cjs
 모듈 제조사 → 모듈 수량을 강조합니다. 자동 계산 항목은 회색 입력과
 자동 계산 배지로 구분하며, 모듈 수량 기준에서도 AC 출력 선택은 가능합니다.
 기준을 전환하면 강조·입력 가능 여부·자동 계산 표시가 함께 전환됩니다.
+
+## 배포 파일 및 캐시
+
+고온 항목명은 `고온 Vmpp 계산용 온도 (℃)`입니다. `public/calculator.html`,
+`public/js/calculator.js`, `server/calculator-engine.js`, `server.js`를 같은
+프로젝트에 반영하고 Node.js 서버를 재시작합니다. 정확한 설치 경로와
+캐시 확인 방법은 `APPLY_CALCULATOR_KO.md`를 참고하세요.
+계산기 HTML과 JavaScript는 `Cache-Control: no-store`로 제공합니다.
+클라이언트와 계산 서버 버전이 맞지 않으면 서버 재시작 안내를 표시합니다.

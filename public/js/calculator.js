@@ -1684,6 +1684,9 @@ async function runCalculation(scroll = true) {
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || '서버 계산에 실패했습니다.');
     if (sequence !== calculationSequence || inputSignature !== signature()) return;
+    if (!data.selection || !data.allocations || data.input?.designMode !== input.designMode) {
+      throw new Error('계산 서버가 이전 버전입니다. server/calculator-engine.js를 반영하고 Node.js 서버를 재시작해 주세요.');
+    }
     const {plans, designs} = data;
     resultState = {...data, signature: inputSignature};
 

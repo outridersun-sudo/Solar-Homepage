@@ -32,7 +32,15 @@ require('./server/admin')(app, pool);
 
 require('./server/calculator')(app);
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders(res, filename) {
+    // Keep calculator markup and its interactive controls on the same release.
+    if (filename === path.join(__dirname, 'public', 'calculator.html') ||
+        filename === path.join(__dirname, 'public', 'js', 'calculator.js')) {
+      res.setHeader('Cache-Control', 'no-store');
+    }
+  }
+}));
 
 app.post(
   '/api/as-requests',
