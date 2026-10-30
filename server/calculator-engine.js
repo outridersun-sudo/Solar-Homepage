@@ -275,8 +275,9 @@ function selectStringPlans(input, designs) {
     a.metrics.totalStrings-b.metrics.totalStrings || a.metrics.balance-b.metrics.balance ||
     a.error-b.error || a.acKW-b.acKW;
   const A = choose(full, (a,b) => a.count-b.count || stringsFirst(a,b));
-  const B = choose(evaluated, (a,b) => a.error-b.error || a.count-b.count ||
-    a.metrics.unallocated-b.metrics.unallocated || stringsFirst(a,b));
+  // A close AC rating must never hide a shortfall in connected module capacity.
+  // All proposals require full allocation and the requested ratio tolerance.
+  const B = choose(full, (a,b) => a.error-b.error || a.count-b.count || stringsFirst(a,b));
   const minFullCount = A?.count || 1;
   const minStrings = full.length ? Math.min(...full.map(plan => plan.metrics.totalStrings)) : 1;
   const balancedScore = plan => .4 * plan.error / (input.tolerance || .1) +
@@ -286,7 +287,7 @@ function selectStringPlans(input, designs) {
   const searchComplete = !truncated && evaluated.every(plan => cache.get(plan).optimization === 'global');
   const reasons = {
     A: A && `전체 ${input.moduleCount}장 연결 후보 중 최소 ${A.count}대, 긴 직렬 활용·스트링 수(${A.metrics.totalStrings}개)·부하 균형 순으로 선정했습니다.`,
-    B: B && `목표 AC/DC 오차 ${(B.error*100).toFixed(2)}%의 최근접 조합입니다. 미배분 ${B.metrics.unallocated}장${B.within ? '' : ', 허용 편차 초과'}입니다.`,
+    B: B && `전체 ${input.moduleCount}장 연결·허용 편차 충족 후보 중 목표 AC/DC 오차 ${(B.error*100).toFixed(2)}%의 최근접 조합입니다. 미배분 0장입니다.`,
     C: '전량 연결·허용 편차 충족 후보에서 용량 오차 40% + 대수 30% + 스트링 수 30%의 정규화 점수가 가장 낮은 조합입니다.'
   };
   const plans = {targetAC:seeds.targetAC};
@@ -296,7 +297,7 @@ function selectStringPlans(input, designs) {
       ' 제한된 후보/재배분 탐색 결과이며 전체 조합의 최적해를 보장하지 않습니다.')} : null;
     if (plan) allocations[id] = cache.get(plan);
   }
-  return {plans, allocations, selection: {complete: searchComplete, evaluated: evaluated.length,
+  return {plans, allocations, selection: {requiresFullAllocation: true, complete: searchComplete, evaluated: evaluated.length,
     note: searchComplete ? '전량 연결 가능성이 있는 허용 범위 후보 조합과 배분을 모두 비교했습니다.' : '계산량 제한으로 후보 또는 배분 탐색을 제한했습니다. 전역 최적해는 보장하지 않습니다.'}};
 }
 

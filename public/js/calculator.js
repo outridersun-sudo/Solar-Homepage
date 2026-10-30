@@ -349,8 +349,8 @@ function invalidate() {
 
 const TITLES = {
   A: 'A안 최소 대수·스트링 우선',
-  B: 'B안 목표 용량 근접',
-  C: 'C안 균형안'
+  B: 'B안 전량 배분·용량 근접',
+  C: 'C안 용량·대수·스트링 균형'
 };
 
 function planName(plan) {
@@ -687,7 +687,7 @@ function renderVerification() {
     plan.within ? '허용 범위' : '편차 초과',
     plan.within
       ? '목표 대비 편차가 입력한 허용 편차 이내입니다.'
-      : '목표 대비 편차가 허용값을 초과합니다. B안은 최근접 대안으로 표시되더라도 조건 충족안은 아닙니다.'
+      : '목표 대비 편차가 허용값을 초과하여 선정 조건을 충족하지 않습니다.'
   );
 
   /*
@@ -1684,7 +1684,7 @@ async function runCalculation(scroll = true) {
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || '서버 계산에 실패했습니다.');
     if (sequence !== calculationSequence || inputSignature !== signature()) return;
-    if (!data.selection || !data.allocations || data.input?.designMode !== input.designMode) {
+    if (!data.selection?.requiresFullAllocation || !data.allocations || data.input?.designMode !== input.designMode) {
       throw new Error('계산 서버가 이전 버전입니다. server/calculator-engine.js를 반영하고 Node.js 서버를 재시작해 주세요.');
     }
     const {plans, designs} = data;
@@ -1693,7 +1693,7 @@ async function runCalculation(scroll = true) {
     renderResults();
     renderAssumptions();
 
-    const chosen = plans[currentChoice] ? currentChoice : 'B';
+    const chosen = [currentChoice, 'A', 'B', 'C'].find(id => plans[id]);
 
     if (plans[chosen]) {
       selectChoice(chosen);
@@ -1711,7 +1711,7 @@ async function runCalculation(scroll = true) {
       $('mpptGrid').replaceChildren(
         element(
           'p',
-          '선택한 전압에서 예비 전압·전류 조건을 만족하는 모델이 없습니다. 조건과 제외 사유를 확인하세요.',
+          '현재 탐색에서 전량 연결·전압·전류 제한·허용 비율 편차를 모두 충족하는 구성안을 찾지 못했습니다. 설비용량과 설계 조건을 확인하세요.',
           'empty-state'
         )
       );
@@ -1741,7 +1741,7 @@ async function runCalculation(scroll = true) {
 
     setText(
       'inputMessage',
-      '실제 DC(STC) ' + asNumber(input.dcKW) +
+      '계획 모듈 DC(STC) ' + asNumber(input.dcKW) +
       'kWp / 목표 AC ' + asNumber(plans.targetAC) +
       'kW / AC/DC 목표 ' + input.ratio.toFixed(3) +
       ' / ' + input.voltage + 'V'
@@ -1749,14 +1749,13 @@ async function runCalculation(scroll = true) {
 
     setText(
       'resultNote',
-      '공통 필수 조건: 전체 모듈 STC 기준 AC/DC > 1.00(동일값 제외). ' +
-      'A: 전량 연결·허용 편차 충족 후보 중 최소 대수·긴 직렬·스트링 수 우선 / ' +
-      'B: 목표 AC/DC 최근접(편차 초과 시 경고) / ' +
+      '공통 필수 조건: 모듈 전량 연결·전압·전류 제한·허용 비율 편차 충족, 전체 모듈 STC 기준 AC/DC > 1.00(동일값 제외). ' +
+      'A: 최소 대수·긴 직렬·스트링 수 우선 / ' +
+      'B: 목표 AC/DC 최근접 / ' +
       'C: 정규화 용량 오차 40%·대수 30%·스트링 수 30% 종합. ' +
       '예비 전압·전류 조건을 통과한 모델만 비교합니다. ' +
       'A~C가 같을 수 있습니다. ' +
-      '카드의 계획 AC/DC는 전체 모듈 기준입니다. ' +
-      '미배분이 있으면 연결 기준 비율을 사전검토 표에서 별도로 확인하세요.'
+      '모든 선정안은 미배분 0장이며, 조건을 충족하는 후보가 없으면 구성안을 표시하지 않습니다.'
     );
 
     if (scroll) {
@@ -1876,7 +1875,7 @@ function unresolvedIssues(input) {
     '%와 단락전류 계수 ' + input.iscFactor +
     '는 화면에 설정한 예비 검토값입니다. 법규·제조사별 적용 기준의 검증을 대신하지 않습니다.',
 
-    '배분은 예비 탐색 방식입니다. 미배분 모듈이 남아도 다른 구성까지 포함한 접속 불가를 확정하는 것은 아닙니다.'
+    '배분은 예비 탐색 방식입니다. 전량 연결 후보를 찾지 못해도 다른 구성까지 포함한 접속 불가를 확정하는 것은 아닙니다.'
   ];
 
   if (input.voltage === 800) {

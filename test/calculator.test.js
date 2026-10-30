@@ -4,6 +4,15 @@ const assert = require('node:assert/strict');
 const {calculate,catalog} = require('../server/calculator-engine');
 const base = {manufacturer:'HD현대에너지솔루션',series:'NA 시리즈',model:'HiC-T645OJ',basis:'capacity',priority:'desc',requestedKWp:400,moduleCount:620,ratio:1,tolerance:.1,voltage:380,kva350:350,pf350:1,minTemperature:-20,maxCellTemperature:70,vmpCoefficient:-.35,rearIrradiance:10,vocMargin:5,iscFactor:1.25,azimuth:180,tilt:30};
 function verify(r) {
+ assert.equal(r.selection.requiresFullAllocation,true);
+ for(const id of ['A','B','C']) {
+  const p=r.plans[id],a=r.allocations[id];
+  if(!p) {assert.equal(a,undefined);continue;}
+  assert.ok(p.within);assert.ok(p.acKW>r.input.dcKW);
+  assert.equal(p.metrics.allocated,r.input.moduleCount);
+  assert.equal(p.metrics.unallocated,0);
+  assert.equal(a.unallocated,0);
+ }
  for (const a of Object.values(r.allocations)) {
   assert.equal(a.allocated+a.unallocated,r.input.moduleCount);
   assert.equal(a.allocated,a.units.reduce((n,u)=>n+u.modules,0));
@@ -76,8 +85,34 @@ test('500 kW floors panel count, conserves panels, and is deterministic',()=>{
  assert.equal(r.input.moduleCount,775);assert.ok(r.input.dcKW<=500);
  assert.equal(r.allocations.A.unallocated,0);
  assert.deepEqual(r.allocations,calculate({...base,requestedKWp:500}).allocations);
- const small=calculate({...base,requestedKWp:1});verify(small);
- assert.ok(small.allocations.B.unallocated>0);
+});
+test('400 kW T645OJ B connects all 620 panels and chooses the closest feasible AC total',()=>{
+ for(const designMode of ['document','standard']) {
+  const r=calculate({...base,designMode,maxCellTemperature:40,rearIrradiance:13.5,vocMargin:designMode==='document'?0:5});
+  verify(r);
+  const b=r.plans.B;
+  assert.equal(b.acKW,408);
+  assert.deepEqual(b.rows.map(row=>[row.kw,row.count]),[[150,2],[36,3]]);
+  assert.equal(r.allocations.B.allocated,620);
+  assert.equal(r.allocations.B.allocated*r.input.module.p/1000,399.9);
+  assert.equal(r.input.iscFactor,1.25);
+  assert.ok(2*r.values.iscDesign>r.designs[110].inverter.mpptIscA);
+  // Independently rule out every smaller AC total using a conservative upper
+  // bound on each inverter's module count, not the allocation optimizer.
+  const cap={};
+  for(const kw of [150,110,60,36]) {
+   const d=r.designs[kw],inv=d.inverter,v=d.values;
+   let parallel=0;
+   for(let p=1;p<=inv.portsPerMppt;p++) if(v.impDesign<=(p===1&&inv.singleStringA?inv.singleStringA:inv.stringA)&&p*v.impDesign<=inv.mpptA&&p*v.iscDesign<=inv.mpptIscA) parallel=p;
+   cap[kw]=Math.min(Math.floor(kw*1000/r.input.module.p),inv.mppt*parallel*d.maxSeries);
+  }
+  for(let a=0;a*150<408;a++) for(let c=0;c*110<408;c++)
+   for(let d=0;d*60<408;d++) for(let e=0;e*36<408;e++) {
+    const ac=a*150+c*110+d*60+e*36;
+    if(ac<=r.input.dcKW||ac>=408)continue;
+    assert.ok(a*cap[150]+c*cap[110]+d*cap[60]+e*cap[36]<620,`closer AC ${ac} cannot connect 620 panels`);
+   }
+ }
 });
 test('800V and large-plant fallback preserve electrical/power constraints',()=>{
  for(const requestedKWp of [400,10000,100000]) {
@@ -97,7 +132,8 @@ test('document mode A selects 520 kW and reproduces 47 long + 5 short strings',(
  assert.equal(r.selection.complete,true);
  assert.deepEqual(r.allocations.A.units.map(u=>u.modules),[223,224,164,164]);
  assert.ok(a.metrics.balance<.005);
- assert.equal(r.plans.B.acKW,500);assert.equal(r.plans.B.metrics.unallocated,2);
+ assert.equal(r.plans.B.acKW,502);assert.equal(r.plans.B.metrics.unallocated,0);
+ assert.deepEqual(r.plans.B.rows.map(row=>[row.kw,row.count]),[[150,1],[110,2],[60,1],[36,2]]);
  assert.equal(r.plans.C.acKW,510);assert.equal(r.plans.C.metrics.totalStrings,53);
  assert.match(r.plans.C.reason,/40%.*30%.*30%/);
 });
@@ -111,11 +147,13 @@ test('standard settings preserve 5% and 1.25, disallow NJ 15-series and still us
  const a=r.plans.A;
  assert.ok(a.within);assert.equal(a.count,4);
  assert.deepEqual(a.rows.map(row=>[row.kw,row.count]),[[150,2],[110,2]]);
+ assert.equal(r.plans.B.acKW,502);assert.equal(r.plans.B.metrics.unallocated,0);
 });
-test('no full feasible proposal leaves A/C empty and exposes B as incomplete',()=>{
- const r=calculate({...base,requestedKWp:1});
- assert.equal(r.plans.A,null);assert.equal(r.plans.C,null);
- assert.ok(r.plans.B.metrics.unallocated>0);
- assert.match(r.plans.B.reason,/미배분/);
+test('no full feasible proposal leaves all plans empty, including B',()=>{
+ for(const overrides of [{requestedKWp:1},{maxCellTemperature:40,rearIrradiance:13.5,tolerance:.01},{tolerance:0}]) {
+  const r=calculate({...base,...overrides});verify(r);
+  for(const id of ['A','B','C'])assert.equal(r.plans[id],null);
+  assert.deepEqual(r.allocations,{});
+ }
  assert.throws(()=>calculate({...base,designMode:'invalid'}));
 });
