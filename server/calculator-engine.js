@@ -1,6 +1,6 @@
 'use strict';
 // 서버 전용: public 폴더 안에 넣지 마세요.
-const catalog = require('./calculator-data/modules.json');
+const {getCatalog} = require('./module-catalog');
 const INVERTERS = require('./calculator-data/inverters.json');
 function capacityPlans(input) {
   const {
@@ -302,7 +302,8 @@ function selectStringPlans(input, designs) {
 }
 
 function moduleDesignValues(module, input) {
-  const rearScale = input.rearIrradiance / 13.5;
+  const substitute=module.rearSpecMode==='gain10';
+  const rearScale = substitute ? 1 : input.rearIrradiance / 13.5;
   const interpolate = (stc, bnpi) => stc + (bnpi - stc) * rearScale;
 
   const ref = {
@@ -735,6 +736,7 @@ function allocatePlant(plan, designs, input, exactWorkLimit = 20000000) {
 
 
 function normalizeInput(body) {
+  const catalog = getCatalog();
   const fail = () => { throw new Error('계산 입력값이나 제품 선택을 확인하세요.'); };
   if (!body || typeof body !== 'object' || Array.isArray(body)) fail();
   const text = key => {
@@ -792,7 +794,7 @@ function calculate(body) {
   return {input, plans, designs:visibleDesigns, allocations, selection,
     values:moduleDesignValues(input.module, input), calculatedAt:new Date().toISOString()};
 }
-module.exports = {calculate, normalizeInput, catalog, INVERTERS, selectStringFuse};
+module.exports = {calculate, normalizeInput, get catalog() {return getCatalog();}, INVERTERS, selectStringFuse};
 
 const {isMainThread, parentPort, workerData} = require('node:worker_threads');
 if (!isMainThread && workerData?.calculatorJob) {

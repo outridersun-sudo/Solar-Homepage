@@ -23,6 +23,10 @@ const asNumber = value => Number(value).toLocaleString(
   {maximumFractionDigits: 3}
 );
 
+const rearSummary = input => input.module.rearSpecMode==='gain10'
+  ? '발전 증가율 10% 대체 사양 고정 적용 (BNPI 아님·후면 일사율 보간 미사용)'
+  : '후면 일사율: '+input.rearIrradiance+'%';
+
 const selectedModule = () =>
   catalog[$('manufacturer').value]
     ?.[$('series').value]
@@ -93,6 +97,14 @@ function updateModule() {
   const m = selectedModule();
   if (!m) return;
 
+  const substitute=m.rearSpecMode==='gain10';
+  $('rearIrradiance').disabled=substitute;
+  let basisNote=$('rearBasisNote');
+  if(!basisNote){basisNote=element('p','','hint');basisNote.id='rearBasisNote';basisNote.setAttribute('role','status');$('rearIrradiance').insertAdjacentElement('afterend',basisNote);}
+  basisNote.textContent=substitute?'제조사 발전 증가율 10% 사양으로 대체 적용합니다. BNPI와 다르며 후면 일사율 입력은 계산에 사용하지 않습니다.':'';
+  $('spPower').previousElementSibling.textContent=substitute?'정격출력(STC / 발전 증가율 10% 대체)':'정격출력(STC / BNPI)';
+  for(const id of ['rearSpecExplanation','rearInputHelp']){const node=$(id);if(node){node.dataset.normal ||= node.textContent;node.textContent=substitute?'제조사 발전 증가율 10% 사양을 고정 대체 적용합니다. BNPI 후면 13.5%와 다른 조건이며 후면 일사율 보간·외삽을 사용하지 않습니다. AC/DC의 DC는 STC 용량입니다.':node.dataset.normal;}}
+  setText('profileNote',substitute?'발전 증가율 10% 대체 적용 — 후면 일사율 입력은 사용하지 않습니다. 온도·여유 계수는 선택한 설계 모드를 따릅니다.':($('designMode').value==='document'?'자료 재현 비교: 저온 Voc는 STC, 후면 일사율에 따라 실제 BNPI 사양을 보간합니다.':'기본 예비 설계: 실제 BNPI 기준으로 입력 후면 일사율과 온도 보정을 적용합니다.'));
   const info = {
     moduleVendor: $('manufacturer').value,
     moduleName: m.name,
@@ -471,8 +483,8 @@ function renderComparison() {
   const note = input.designMode === 'document'
     ? '자료 재현 비교: 저온 Voc는 STC 사양을 사용합니다. Vmpp·전류는 입력한 후면 일사율에 따라 계산합니다. 기본 예비 설계와 기준이 다릅니다.'
     : '기본 예비 설계: 후면 일사율을 반영한 Voc에 저온 보정과 추가 여유율을 적용합니다.';
-  setText('comparisonWarnings', note + '\n' + input.module.name + ' / 셀온도 ' + input.minTemperature + '~' +
-    input.maxCellTemperature + '℃ / 후면 ' + input.rearIrradiance + '% / Voc 여유 ' + input.vocMargin +
+  setText('comparisonWarnings', (input.module.rearSpecMode==='gain10'?rearSummary(input):note) + '\n' + input.module.name + ' / 셀온도 ' + input.minTemperature + '~' +
+    input.maxCellTemperature + '℃ / '+rearSummary(input)+' / Voc 여유 ' + input.vocMargin +
     '% / 단락전류 계수 ' + input.iscFactor + '\n15직렬 저온 Voc(여유 포함): ' +
     (values.vocWithMargin*15).toFixed(2) + 'V' + (design ? ' / '+design.inverter.kw+'kW의 허용 직렬 범위 '+design.minSeries+'~'+design.maxSeries+'장' : '') +
     '\n' + selection.note + ' 평가 후보 '+selection.evaluated+'개.');
@@ -487,6 +499,7 @@ function applyDesignMode() {
     : '기본 예비 설계: −20~40℃, 후면 13.5%(BNPI), Voc 여유 5%, 단락전류 계수 1.25. 실제 현장 조건은 별도 확인하세요.');
   const module = selectedModule();
   if (module) $('vmpCoefficient').value = module.betaVoc;
+  if(module?.rearSpecMode==='gain10')setText('profileNote',rearSummary({module})+' / 셀온도 -20~40℃, 선택한 Voc 여유 및 단락전류 계수 적용');
   invalidate();
   return runCalculation(false);
 }
@@ -546,6 +559,7 @@ function renderVerification() {
   const plan = resultState.plans[activeCard];
   const allocation = resultState.allocations[activeCard];
   const m = input.module;
+  const substitute=m.rearSpecMode==='gain10';
   const values = resultState.values;
 
   const fixed = (value, digits = 3) =>
@@ -561,7 +575,7 @@ function renderVerification() {
   function add(name, description, kind, label, reason) {
     rows.push({
       name,
-      description,
+      description:substitute?description.replaceAll('BNPI','10% 대체 사양'):description,
       kind,
       label,
       reason
@@ -782,11 +796,12 @@ function renderVerification() {
   /*
    * 6. 양면 출력 보간 및 전류 온도 보정
    */
-  const rearScale = input.rearIrradiance / 13.5;
+  const rearScale = substitute ? 1 : input.rearIrradiance / 13.5;
 
   let rearMethod;
 
-  if (Math.abs(input.rearIrradiance) < 1e-10) {
+  if(substitute){rearMethod='제조사 발전 증가율 10% 표의 사양 고정 적용. 후면 일사율 보간 없음';}
+  else if (Math.abs(input.rearIrradiance) < 1e-10) {
     rearMethod = '후면 0%: STC 기준값';
   } else if (
     Math.abs(input.rearIrradiance - 13.5) < 1e-10
@@ -815,16 +830,15 @@ function renderVerification() {
     lines(
       '자료 근거: ' + m.source,
       '',
-      'BNPI 기준 조건:',
-      '전면 1,000W/㎡ / 후면 135W/㎡ / 셀온도 25℃',
-      '후면 비율 = 135 ÷ 1,000 × 100 = 13.5%',
+      substitute?'대체 적용 조건:':'BNPI 기준 조건:',
+      substitute?'제조사 발전 증가율 10% 표의 원본 값 사용':'전면 1,000W/㎡ / 후면 135W/㎡ / 셀온도 25℃',
+      substitute?'후면 일사율 13.5%와 동일한 조건이 아닙니다.':'후면 비율 = 135 ÷ 1,000 × 100 = 13.5%',
       '',
-      '입력 후면 일사율: ' + input.rearIrradiance + '%',
+      rearSummary(input),
       '적용 방식: ' + rearMethod,
       '',
       '보간·외삽 비율 r:',
-      input.rearIrradiance + ' ÷ 13.5 = ' +
-      fixed(rearScale, 6),
+      substitute?'고정 대체 적용 r = 1 (후면 일사율 보간 미사용)':input.rearIrradiance+' ÷ 13.5 = '+fixed(rearScale,6),
       '',
       '일반 계산식:',
       '적용값 = STC값 + (BNPI값 − STC값) × r',
@@ -1383,7 +1397,7 @@ function renderVerification() {
       '유효전력: ' + fixed(input.kva350 * input.pf350) + 'kW/대'
     ),
     '양면 시나리오': lines(
-      '후면 일사율: ' + input.rearIrradiance + '%',
+      rearSummary(input),
       '25℃ 출력 추정: ' + fixed(values.power) + 'W/장',
       '25℃ Imp 추정: ' + fixed(values.imp) + 'A',
       '온도 보정 Imp 추정: ' + fixed(values.impDesign) + 'A'
@@ -1826,7 +1840,7 @@ function linkQuote() {
       plan.within ? '허용 편차 이내' : '주의: 허용 편차 초과 구성안',
       '모듈 배분: ' + allocation.allocated + '장 / 미배분: ' + allocation.unallocated + '장',
       '설계 최저온도: ' + input.minTemperature + '℃ / 최고 셀온도: ' + input.maxCellTemperature + '℃',
-      '후면 일사율: ' + input.rearIrradiance + '% / 방위각: ' + input.azimuth + '° / 경사: ' + input.tilt + '°',
+      rearSummary(input) + ' / 방위각: ' + input.azimuth + '° / 경사: ' + input.tilt + '°',
       ...plan.rows.map(row => {
         const review = resultState.designs[row.kw].fuseReview;
         const used = allocation.units.some(unit => unit.kw === row.kw && unit.modules > 0);
@@ -1897,6 +1911,10 @@ function unresolvedIssues(input) {
     );
   }
 
+  if(input.module.rearSpecMode==='gain10'){
+    const index=issues.findIndex(text=>text.startsWith('후면 일사율 '));
+    if(index>=0)issues[index]=rearSummary(input)+' — 제조사 표를 대체 사용한 예비 계산이며 최종 설계 검증값이 아닙니다.';
+  }
   return issues;
 }
 
@@ -1915,6 +1933,7 @@ function renderAssumptions() {
     '°·경사 ' + input.tilt + '°·음영 없음'
   );
 
+  if(input.module.rearSpecMode==='gain10')setText('assumptionSummary',rearSummary(input)+' / '+input.module.name+' / 셀온도 '+input.minTemperature+'~'+input.maxCellTemperature+'℃ / Voc 추가 여유 '+input.vocMargin+'% / 방위 '+input.azimuth+'°·경사 '+input.tilt+'°');
   $('unconfirmedList').replaceChildren(
     ...unresolvedIssues(input).map(
       text => element('li', text)
@@ -2258,6 +2277,7 @@ async function startCalculator() {
     catalog = data.modules;
     INVERTERS = data.inverters;
     document.querySelectorAll('main input, main select, main button, .hero-actions button').forEach(node => node.disabled = false);
+    $('rearIrradiance').disabled=selectedModule()?.rearSpecMode==='gain10';
     $('inverterPreview').disabled = true;
     init();
     status.hidden = true;
