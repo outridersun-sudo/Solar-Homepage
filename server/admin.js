@@ -15,19 +15,15 @@ module.exports = function registerAdmin(app, pool) {
   cleanup.unref();
 
   function getSession(req) {
-    const cookie = (req.headers.cookie || '')
+    const cookies = (req.headers.cookie || '')
       .split(';')
       .map(value => value.trim())
-      .find(value => value.startsWith('admin_session='));
-
-    if (!cookie) return null;
-
-    const id = cookie.slice('admin_session='.length);
-    const session = sessions.get(id);
-
-    return session && session.expires > Date.now()
-      ? session
-      : null;
+      .filter(value => value.startsWith('admin_session='));
+    for (const cookie of cookies) {
+      const session = sessions.get(cookie.slice('admin_session='.length));
+      if (session && session.expires > Date.now()) return session;
+    }
+    return null;
   }
 
   function makeCookie(req, value, maxAge) {
@@ -37,7 +33,7 @@ module.exports = function registerAdmin(app, pool) {
 
     return (
       `admin_session=${value}; ` +
-      'Path=/api/admin; HttpOnly; SameSite=Strict; ' +
+      'Path=/; HttpOnly; SameSite=Strict; ' +
       `Max-Age=${maxAge}` +
       (secure ? '; Secure' : '')
     );
@@ -153,7 +149,7 @@ module.exports = function registerAdmin(app, pool) {
 
         res.setHeader(
           'Set-Cookie',
-          makeCookie(req, id, sessionDuration / 1000)
+          [makeCookie(req, id, sessionDuration / 1000), 'admin_session=; Path=/api/admin; HttpOnly; SameSite=Strict; Max-Age=0']
         );
 
         res.json({ csrf });
@@ -196,7 +192,7 @@ module.exports = function registerAdmin(app, pool) {
   app.post('/api/admin/logout', (req, res) => {
     sessions.delete(req.adminSession.id);
 
-    res.setHeader('Set-Cookie', makeCookie(req, '', 0));
+    res.setHeader('Set-Cookie', [makeCookie(req, '', 0), 'admin_session=; Path=/api/admin; HttpOnly; SameSite=Strict; Max-Age=0']);
     res.json({ ok: true });
   });
 
@@ -236,6 +232,14 @@ module.exports = function registerAdmin(app, pool) {
   require('./notices').registerAdmin(app, pool);
   require('./downloads').registerAdmin(app, pool);
   require('./attachments').registerAdmin(app, pool);
+  require('./modules')(app);
+
+  // This page is private even when requested directly, before express.static.
+  app.get(/^\/reg-module\.html\/?$/i, (req, res, next) => {
+    res.set('Cache-Control', 'no-store');
+    if (!getSession(req)) return res.redirect('/admin.html');
+    res.sendFile(require('node:path').join(__dirname, '..', 'private', 'reg-module.html'));
+  });
 
   // 관리자 점검 기록
   require('./inspections')(app, pool);

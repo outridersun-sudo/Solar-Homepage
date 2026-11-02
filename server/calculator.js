@@ -1,6 +1,7 @@
 'use strict';
 const {Worker} = require('node:worker_threads');
-const {normalizeInput, catalog, INVERTERS} = require('./calculator-engine');
+const {normalizeInput, INVERTERS} = require('./calculator-engine');
+const {getCatalog} = require('./module-catalog');
 module.exports = app => {
   let active = 0;
   const clients = new Map();
@@ -14,7 +15,7 @@ module.exports = app => {
   // 계산기는 아래 API를 사용하고, 계산 알고리즘은 public 밖에서만 실행합니다.
   app.get('/api/calculator/catalog', (req, res) => {
     res.set('Cache-Control','no-store');
-    res.json({modules:catalog, inverters:INVERTERS});
+    res.json({modules:getCatalog(), inverters:INVERTERS});
   });
   app.post('/api/calculator/calculate', (req, res) => {
     res.set('Cache-Control','no-store');
