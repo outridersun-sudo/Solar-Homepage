@@ -23,8 +23,10 @@ const asNumber = value => Number(value).toLocaleString(
   {maximumFractionDigits: 3}
 );
 
-const rearSummary = input => input.module.rearSpecMode==='gain10'
-  ? '발전 증가율 10% 대체 사양 고정 적용 (BNPI 아님·후면 일사율 보간 미사용)'
+const fixedRear = module => ['gain10','bstc'].includes(module?.rearSpecMode);
+const rearLabel = module => module?.rearSpecMode==='bstc'?'BSTC':'발전 증가율 10% 대체 사양';
+const rearSummary = input => fixedRear(input.module)
+  ? '제조사 '+rearLabel(input.module)+' 고정 적용 (후면 일사율 보간 미사용·양면계수 추가 적용 없음)'
   : '후면 일사율: '+input.rearIrradiance+'%';
 
 const selectedModule = () =>
@@ -97,14 +99,14 @@ function updateModule() {
   const m = selectedModule();
   if (!m) return;
 
-  const substitute=m.rearSpecMode==='gain10';
+  const substitute=fixedRear(m);
   $('rearIrradiance').disabled=substitute;
   let basisNote=$('rearBasisNote');
   if(!basisNote){basisNote=element('p','','hint');basisNote.id='rearBasisNote';basisNote.setAttribute('role','status');$('rearIrradiance').insertAdjacentElement('afterend',basisNote);}
-  basisNote.textContent=substitute?'제조사 발전 증가율 10% 사양으로 대체 적용합니다. BNPI와 다르며 후면 일사율 입력은 계산에 사용하지 않습니다.':'';
-  $('spPower').previousElementSibling.textContent=substitute?'정격출력(STC / 발전 증가율 10% 대체)':'정격출력(STC / BNPI)';
-  for(const id of ['rearSpecExplanation','rearInputHelp']){const node=$(id);if(node){node.dataset.normal ||= node.textContent;node.textContent=substitute?'제조사 발전 증가율 10% 사양을 고정 대체 적용합니다. BNPI 후면 13.5%와 다른 조건이며 후면 일사율 보간·외삽을 사용하지 않습니다. AC/DC의 DC는 STC 용량입니다.':node.dataset.normal;}}
-  setText('profileNote',substitute?'발전 증가율 10% 대체 적용 — 후면 일사율 입력은 사용하지 않습니다. 온도·여유 계수는 선택한 설계 모드를 따릅니다.':($('designMode').value==='document'?'자료 재현 비교: 저온 Voc는 STC, 후면 일사율에 따라 실제 BNPI 사양을 보간합니다.':'기본 예비 설계: 실제 BNPI 기준으로 입력 후면 일사율과 온도 보정을 적용합니다.'));
+  basisNote.textContent=substitute?rearSummary({module:m})+' / '+(m.specification?.testConditions || '제조사 원본 시험 조건'):'';
+  $('spPower').previousElementSibling.textContent=substitute?'정격출력(STC / '+rearLabel(m)+')':'정격출력(STC / BNPI)';
+  for(const id of ['rearSpecExplanation','rearInputHelp']){const node=$(id);if(node){node.dataset.normal ||= node.textContent;node.textContent=substitute?rearSummary({module:m})+'. AC/DC의 DC는 STC 용량입니다.':node.dataset.normal;}}
+  setText('profileNote',substitute?rearSummary({module:m})+' — 온도·여유 계수는 선택한 설계 모드를 따릅니다.':($('designMode').value==='document'?'자료 재현 비교: 저온 Voc는 STC, 후면 일사율에 따라 실제 BNPI 사양을 보간합니다.':'기본 예비 설계: 실제 BNPI 기준으로 입력 후면 일사율과 온도 보정을 적용합니다.'));
   const info = {
     moduleVendor: $('manufacturer').value,
     moduleName: m.name,
@@ -483,7 +485,7 @@ function renderComparison() {
   const note = input.designMode === 'document'
     ? '자료 재현 비교: 저온 Voc는 STC 사양을 사용합니다. Vmpp·전류는 입력한 후면 일사율에 따라 계산합니다. 기본 예비 설계와 기준이 다릅니다.'
     : '기본 예비 설계: 후면 일사율을 반영한 Voc에 저온 보정과 추가 여유율을 적용합니다.';
-  setText('comparisonWarnings', (input.module.rearSpecMode==='gain10'?rearSummary(input):note) + '\n' + input.module.name + ' / 셀온도 ' + input.minTemperature + '~' +
+  setText('comparisonWarnings', (fixedRear(input.module)?rearSummary(input):note) + '\n' + input.module.name + ' / 셀온도 ' + input.minTemperature + '~' +
     input.maxCellTemperature + '℃ / '+rearSummary(input)+' / Voc 여유 ' + input.vocMargin +
     '% / 단락전류 계수 ' + input.iscFactor + '\n15직렬 저온 Voc(여유 포함): ' +
     (values.vocWithMargin*15).toFixed(2) + 'V' + (design ? ' / '+design.inverter.kw+'kW의 허용 직렬 범위 '+design.minSeries+'~'+design.maxSeries+'장' : '') +
@@ -499,7 +501,7 @@ function applyDesignMode() {
     : '기본 예비 설계: −20~40℃, 후면 13.5%(BNPI), Voc 여유 5%, 단락전류 계수 1.25. 실제 현장 조건은 별도 확인하세요.');
   const module = selectedModule();
   if (module) $('vmpCoefficient').value = module.betaVoc;
-  if(module?.rearSpecMode==='gain10')setText('profileNote',rearSummary({module})+' / 셀온도 -20~40℃, 선택한 Voc 여유 및 단락전류 계수 적용');
+  if(fixedRear(module))setText('profileNote',rearSummary({module})+' / 셀온도 -20~40℃, 선택한 Voc 여유 및 단락전류 계수 적용');
   invalidate();
   return runCalculation(false);
 }
@@ -559,7 +561,7 @@ function renderVerification() {
   const plan = resultState.plans[activeCard];
   const allocation = resultState.allocations[activeCard];
   const m = input.module;
-  const substitute=m.rearSpecMode==='gain10';
+  const substitute=fixedRear(m);
   const values = resultState.values;
 
   const fixed = (value, digits = 3) =>
@@ -575,7 +577,7 @@ function renderVerification() {
   function add(name, description, kind, label, reason) {
     rows.push({
       name,
-      description:substitute?description.replaceAll('BNPI','10% 대체 사양'):description,
+      description:substitute?description.replaceAll('BNPI',rearLabel(m)).replaceAll('저온 Voc는 STC','저온 Voc는 제조사 양면 원본'):description,
       kind,
       label,
       reason
@@ -800,7 +802,7 @@ function renderVerification() {
 
   let rearMethod;
 
-  if(substitute){rearMethod='제조사 발전 증가율 10% 표의 사양 고정 적용. 후면 일사율 보간 없음';}
+  if(substitute){rearMethod='제조사 '+rearLabel(m)+' 표의 사양 고정 적용. 후면 일사율 보간 없음';}
   else if (Math.abs(input.rearIrradiance) < 1e-10) {
     rearMethod = '후면 0%: STC 기준값';
   } else if (
@@ -831,7 +833,7 @@ function renderVerification() {
       '자료 근거: ' + m.source,
       '',
       substitute?'대체 적용 조건:':'BNPI 기준 조건:',
-      substitute?'제조사 발전 증가율 10% 표의 원본 값 사용':'전면 1,000W/㎡ / 후면 135W/㎡ / 셀온도 25℃',
+      substitute?(m.specification?.testConditions || '제조사 '+rearLabel(m)+' 원본 값 사용'):'전면 1,000W/㎡ / 후면 135W/㎡ / 셀온도 25℃',
       substitute?'후면 일사율 13.5%와 동일한 조건이 아닙니다.':'후면 비율 = 135 ÷ 1,000 × 100 = 13.5%',
       '',
       rearSummary(input),
@@ -910,8 +912,8 @@ function renderVerification() {
   add(
     '저온 Voc',
     lines(
-      input.designMode === 'document' ? '자료 재현: 25℃ STC Voc 사용' : '25℃ 기준 양면 보정 Voc:',
-      input.designMode === 'document' ? fixed(m.voc) + 'V/장 (후면 보정 없이 자료의 기준 적용)' :
+      substitute ? '25℃ 제조사 양면 원본 Voc 고정 적용:' : input.designMode === 'document' ? '자료 재현: 25℃ STC Voc 사용' : '25℃ 기준 양면 보정 Voc:',
+      substitute ? fixed(values.voc)+'V/장 (후면 일사율 보간 없음)' : input.designMode === 'document' ? fixed(m.voc) + 'V/장 (후면 보정 없이 자료의 기준 적용)' :
         fixed(m.voc) + ' + (' + fixed(m.bnpiVoc) + ' − ' + fixed(m.voc) + ') × ' + fixed(rearScale, 6),
       '= ' + fixed(values.voc) + 'V/장',
       '',
@@ -1403,7 +1405,7 @@ function renderVerification() {
       '온도 보정 Imp 추정: ' + fixed(values.impDesign) + 'A'
     ),
     '저온 Voc': lines(
-      input.designMode === 'document' ? '자료 재현: STC Voc 사용' : '후면 일사율을 반영한 Voc 사용',
+      substitute ? '제조사 양면 원본 Voc 고정 적용' : input.designMode === 'document' ? '자료 재현: STC Voc 사용' : '후면 일사율을 반영한 Voc 사용',
       groupedResult(group => '저온 Voc (여유 포함): ' + fixed(group.series * values.vocWithMargin) + 'V')
     ),
     '고온·저온 Vmpp': groupedResult(group => lines(
@@ -1911,7 +1913,7 @@ function unresolvedIssues(input) {
     );
   }
 
-  if(input.module.rearSpecMode==='gain10'){
+  if(fixedRear(input.module)){
     const index=issues.findIndex(text=>text.startsWith('후면 일사율 '));
     if(index>=0)issues[index]=rearSummary(input)+' — 제조사 표를 대체 사용한 예비 계산이며 최종 설계 검증값이 아닙니다.';
   }
@@ -1933,7 +1935,7 @@ function renderAssumptions() {
     '°·경사 ' + input.tilt + '°·음영 없음'
   );
 
-  if(input.module.rearSpecMode==='gain10')setText('assumptionSummary',rearSummary(input)+' / '+input.module.name+' / 셀온도 '+input.minTemperature+'~'+input.maxCellTemperature+'℃ / Voc 추가 여유 '+input.vocMargin+'% / 방위 '+input.azimuth+'°·경사 '+input.tilt+'°');
+  if(fixedRear(input.module))setText('assumptionSummary',rearSummary(input)+' / '+input.module.name+' / 셀온도 '+input.minTemperature+'~'+input.maxCellTemperature+'℃ / Voc 추가 여유 '+input.vocMargin+'% / 방위 '+input.azimuth+'°·경사 '+input.tilt+'°');
   $('unconfirmedList').replaceChildren(
     ...unresolvedIssues(input).map(
       text => element('li', text)
@@ -2277,7 +2279,7 @@ async function startCalculator() {
     catalog = data.modules;
     INVERTERS = data.inverters;
     document.querySelectorAll('main input, main select, main button, .hero-actions button').forEach(node => node.disabled = false);
-    $('rearIrradiance').disabled=selectedModule()?.rearSpecMode==='gain10';
+    $('rearIrradiance').disabled=fixedRear(selectedModule());
     $('inverterPreview').disabled = true;
     init();
     status.hidden = true;

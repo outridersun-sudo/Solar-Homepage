@@ -51,9 +51,10 @@ function validate(body, pages = 100) {
   };
   const manufacturer = text('manufacturer', true), series = text('series', true), name = text('name', true);
   const mode=body.rearSpecMode || 'bnpi';
-  if(!['bnpi','gain10'].includes(mode))throw blocked('BIFACIAL_SPECS_MISSING','양면 사양 부족: 적용 기준을 확인하세요.');
+  if(!['bnpi','gain10','bstc'].includes(mode))throw blocked('BIFACIAL_SPECS_MISSING','양면 사양 부족: 적용 기준을 확인하세요.');
   if(mode==='gain10' && body.substituteConfirmed!==true)throw blocked('BIFACIAL_SPECS_MISSING','양면 사양 부족: 발전 증가율 10% 사양의 대체 적용에 동의해야 합니다.');
   const module = {name,rearSpecMode:mode};
+  if(body.specification)module.specification=structuredClone(body.specification);
   for (const [key, [min,max]] of Object.entries(numeric)) {
     const value = body[key];
     if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) throw blocked('BIFACIAL_SPECS_MISSING','양면 사양 부족: 필수 STC·선택한 양면 사양 또는 온도·보호 정격이 누락되었거나 유효하지 않습니다. '+key+' 값과 단위를 확인하세요.');
@@ -71,25 +72,32 @@ function validate(body, pages = 100) {
   module.temp = `${module.gammaPower} | ${module.betaVoc} | ${module.alphaIsc} %/℃`;
   module.iscCoefficientUnconfirmed = module.alphaIsc < 0;
   if (body.reviewed !== true) throw problem('원본 PDF와 필수 사양을 대조한 뒤 검토 완료를 선택하세요.');
-  return {manufacturer, series, module, evidence:{status:'bifacial',page:body.evidencePage,text:body.bifacialEvidence.trim(),rearSpecMode:mode,rearIrradiancePercent:mode==='gain10'?null:13.5,gainPercent:mode==='gain10'?10:null}};
+  return {manufacturer, series, module, evidence:{status:'bifacial',page:body.evidencePage,text:body.bifacialEvidence.trim(),rearSpecMode:mode,rearIrradiancePercent:mode==='bnpi'?13.5:null,gainPercent:mode==='gain10'?10:null}};
 }
-function add(body, source) {
-  const row = validate(body, source.pages);
-  fs.mkdirSync(directory, {recursive:true});
+function addMany(entries) {
+  const rows=entries.map(({body,source})=>validate(body,source.pages));
+  fs.mkdirSync(directory,{recursive:true});
+  const lockPath=path.join(directory,'.catalog.lock');
   let lock;
-  const lockPath = path.join(directory, '.catalog.lock');
-  try { lock = fs.openSync(lockPath, 'wx', 0o600); }
-  catch (error) { if (error.code === 'EEXIST') throw problem('다른 등록을 처리 중입니다. 잠시 후 다시 시도하세요.', 409); throw error; }
-  const temporary = filename + '.' + crypto.randomUUID() + '.tmp';
-  try {
-    if (list().some(item => identity(item.manufacturer) === identity(row.manufacturer) && identity(item.name) === identity(row.module.name))) {
-      throw problem('동일한 제조사·모델명이 이미 등록되어 처리할 수 없습니다. 기존 사양은 변경되지 않았습니다.', 409);
+  try{lock=fs.openSync(lockPath,'wx',0o600);}
+  catch(error){if(error.code==='EEXIST')throw problem('다른 등록을 처리 중입니다. 잠시 후 다시 시도하세요.',409);throw error;}
+  const temporary=filename+'.'+crypto.randomUUID()+'.tmp';
+  try{
+    const identities=new Set(list().map(row=>identity(row.manufacturer)+'\0'+identity(row.name)));
+    for(const row of rows){
+      const key=identity(row.manufacturer)+'\0'+identity(row.module.name);
+      if(identities.has(key))throw problem('동일한 제조사·모델명이 이미 등록되어 처리할 수 없습니다. 기존 사양은 변경되지 않았습니다.',409);
+      identities.add(key);
     }
-    row.module.source = source.filename + ' (관리자 검토 완료)';
-    const stored = {...row, pdfId:source.id, originalName:source.filename, createdAt:new Date().toISOString()};
-    fs.writeFileSync(temporary, JSON.stringify([...records(), stored], null, 2), {mode:0o600});
-    fs.renameSync(temporary, filename);
-    return row;
-  } finally { fs.rmSync(temporary, {force:true}); fs.closeSync(lock); fs.rmSync(lockPath, {force:true}); }
+    const stored=rows.map((row,i)=>{
+      const source=entries[i].source;
+      row.module.source=source.filename+' (관리자 검토 완료)';
+      if(source.kind==='text')row.evidence.sourceKind='text';
+      return {...row,pdfId:source.id,originalName:source.filename,supplements:source.supplements||[],...(source.kind==='text'?{sourceKind:'text',importCells:source.importCells}:{}),createdAt:new Date().toISOString()};
+    });
+    fs.writeFileSync(temporary,JSON.stringify([...records(),...stored],null,2),{mode:0o600});
+    fs.renameSync(temporary,filename);
+    return rows;
+  }finally{fs.rmSync(temporary,{force:true});fs.closeSync(lock);fs.rmSync(lockPath,{force:true});}
 }
-module.exports = {getCatalog, list, validate, add, directory, numeric};
+module.exports={getCatalog,list,validate,addMany,directory,numeric};

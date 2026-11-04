@@ -6,51 +6,36 @@
   <meta name="robots" content="noindex,nofollow">
   <title>태양광 모듈 등록 | 천일테크윈 관리자</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="/css/reg-module.css">
-  <script src="/js/reg-module.js" defer></script>
+  <link rel="stylesheet" href="/css/reg-module.css?v=11">
+  <script src="/js/reg-module.js?v=11" defer></script>
+  <script src="/js/module-text-format.js?v=11" defer></script>
+  <script src="/js/module-text-import.js?v=11" defer></script>
 </head>
 <body>
 <header class="topbar"><div><a class="brand" href="/admin.html">천일테크윈 <span>ADMIN</span></a><span class="admin-label">관리자 전용</span></div></header>
 <main>
   <nav aria-label="관리 메뉴"><a href="/admin.html">A/S 관리</a><a href="/admin-notices.html">공지 관리</a><a href="/admin-downloads.html">기술자료 관리</a><a href="/reg-module.html" aria-current="page">태양광 모듈 등록</a></nav>
-  <div class="heading"><div><p class="eyebrow">SOLAR MODULE LIBRARY</p><h1>태양광 모듈 등록</h1><p class="muted">사양서 PDF를 불러와 모듈을 등록하고, 설비 구성 계산기에 적용하세요.</p></div><a class="button secondary" href="/calculator.html" target="_blank" rel="noopener">계산기 열기 ↗</a></div>
+  <div class="heading"><div><p class="eyebrow">SOLAR MODULE LIBRARY</p><h1>태양광 모듈 등록</h1><p class="muted">분석한 사양 텍스트를 한 번에 붙여넣고, 모델별로 검토해 계산기에 등록하세요.</p></div><a class="button secondary" href="/calculator.html" target="_blank" rel="noopener">계산기 열기 ↗</a></div>
   <p id="message" class="message" role="status" aria-live="polite">관리자 로그인 상태를 확인하고 있습니다.</p>
   <div id="management" hidden>
-    <section class="card upload-card" aria-labelledby="upload-title">
-      <div class="section-title"><div><span class="step">01</span><h2 id="upload-title">PDF 사양서 불러오기</h2></div><span class="pill">텍스트 PDF 지원</span></div>
-      <form id="upload-form"><div class="upload-grid">
-        <label class="dropzone" id="dropzone" for="pdf-file"><span class="file-icon" aria-hidden="true">↥</span><strong id="filename">PDF를 끌어놓거나 클릭해 선택하세요</strong><span>PDF 1개 · 최대 20MB · 최대 100페이지</span><input id="pdf-file" type="file" accept="application/pdf,.pdf" required></label>
-        <div class="upload-options"><label for="source-page">사양표 페이지</label><div class="inline"><input id="source-page" type="number" min="1" max="100" value="1" required><span>페이지</span></div><p class="hint">전기적 특성 표가 있는 페이지를 선택하세요. 텍스트 선택이 가능한 PDF를 사용하세요. 이미지로 된 페이지는 사양을 직접 입력해야 합니다.</p><button class="button primary" id="analyze" type="submit">PDF 불러오기 및 분석</button><p id="analysis-status" class="hint" role="status" aria-live="polite">한 번에 한 페이지를 분석합니다.</p></div>
-      </div></form>
-    </section>
-
-    <section class="card review-card" id="review" hidden aria-labelledby="review-title">
-      <div class="section-title"><div><span class="step">02</span><h2 id="review-title">사양 검토 및 등록</h2></div><button id="cancel" class="text-button" type="button">불러온 PDF 취소</button></div>
-      <div class="notice">PDF 추출 결과는 원본 확인이 필요합니다. 여러 모델이 있는 표는 등록할 모델을 선택하고 추출값을 확인하세요. 적용 조건은 PDF에서 자동 판정합니다. 제조사와 모델명이 같으면 등록할 수 없습니다.</div>
-      <div class="review-grid">
-        <div class="preview-panel"><div class="preview-heading"><strong>원본 PDF · 선택한 페이지</strong><a id="open-pdf" target="_blank" rel="noopener">새 창에서 보기 ↗</a></div><img id="pdf-preview" alt="등록할 모듈의 PDF 사양표 페이지" hidden><p id="preview-help" class="hint">미리보기가 없으면 ‘새 창에서 보기’로 원본을 확인하세요.</p><details><summary>추출한 텍스트 확인</summary><pre id="extracted-text"></pre></details></div>
-        <form id="module-form">
-          <fieldset id="model-selection" hidden>
-            <legend>등록할 모델 선택</legend>
-            <label for="extracted-model">PDF에서 확인한 모델</label>
-            <select id="extracted-model"><option value="">모델을 선택하세요</option></select>
-            <p class="hint">선택한 모델의 STC 값과 확인된 BNPI 값만 입력합니다. NOCT·NMOT·발전 증가율은 참고값입니다.</p>
-            <p id="model-warning" class="notice" hidden></p>
-            <div id="condition-summary" class="condition-summary"></div>
-          </fieldset>
-          <fieldset><legend>기본 정보</legend><div class="fields" id="basic-fields"></div><p id="duplicate" class="duplicate" role="status" hidden></p></fieldset>
-          <fieldset><legend>전기적 특성 <span>STC 기준</span></legend><div class="fields" id="stc-fields"></div></fieldset>
-          <fieldset><legend>온도계수 및 보호 정격</legend><div class="fields" id="coefficient-fields"></div><p class="hint">온도계수는 %/℃ 단위입니다. 예: −0.25%/℃는 −0.25로 입력하세요.</p></fieldset>
-          <fieldset><legend>양면 적용 사양</legend>
-            <p id="rear-spec-help" class="hint">PDF에서 확인한 적용 기준을 자동으로 사용합니다.</p><div class="fields" id="bnpi-fields"></div></fieldset>
-          <details class="optional"><summary>추가 제품 정보 (선택)</summary><div class="fields" id="optional-fields"></div></details>
-          <div class="save-panel"><p class="hint">등록 즉시 계산기 목록에 추가됩니다. 이미 열린 계산기는 새로고침하세요.</p><button id="save" aria-describedby="save-status" class="button primary" type="submit">검토 완료 후 모듈 등록</button><p id="save-status" class="hint" role="status" aria-live="polite"></p></div>
-        </form>
+    <section class="card" aria-labelledby="text-title">
+      <div class="section-title"><div><span class="step">01</span><h2 id="text-title">사양 텍스트 붙여넣기</h2></div><span class="pill">28개 열 · 여러 모델 한 번에</span></div>
+      <label for="text-input">GPT에서 출력한 헤더와 모든 모델 행을 함께 복사하세요.</label>
+      <textarea id="text-input" rows="9" spellcheck="false" placeholder="제조사 → 시리즈 → 모델명 … 출처페이지 순서의 탭 구분 텍스트"></textarea>
+      <p class="hint">PDF·이미지 업로드 없이 등록할 수 있습니다. 누락된 필수값은 추가 자료나 직접 입력으로 확인하세요. 원본 파일명과 페이지는 출처 기록이며 파일이 업로드되었다는 뜻은 아닙니다.</p>
+      <button id="text-check" type="button" class="button primary">모델별 검토표 만들기</button>
+      <p id="text-status" class="message" role="status" aria-live="polite"></p>
+      <div id="text-review" hidden>
+        <p class="hint">BNPI는 후면 일사율·설계 모드에 따라 보정합니다. gain10·BSTC는 제조사 양면 사양을 고정 적용하고, 발전 증가율·양면계수를 다시 곱하지 않습니다. 설비 DC 용량은 STC 기준입니다.</p>
+        <div class="table-scroll text-grid-scroll" tabindex="0" aria-label="사양 검토표 가로 스크롤"><table id="text-grid"></table></div>
+        <div class="text-actions"><button id="text-recheck" type="button" class="button secondary">수정값 검사</button><span id="text-selection"></span></div>
+        <label class="check"><input id="text-reviewed" type="checkbox"> 선택한 모델의 수치·시험 조건·출처를 원본과 대조했습니다.</label>
+        <label class="check"><input id="text-modes" type="checkbox"> 선택한 모델의 BNPI 보정 또는 gain10·BSTC 고정 적용 방식에 동의합니다.</label>
+        <button id="text-register" type="button" class="button primary" disabled>선택한 모델 등록</button>
       </div>
     </section>
-
     <section class="card library" aria-labelledby="library-title">
-      <div class="section-title"><div><span class="step">03</span><h2 id="library-title">계산기에 적용 중인 모듈 <span id="module-count" class="count">0</span></h2></div><button id="refresh" class="text-button" type="button">목록 새로고침 ↻</button></div>
+      <div class="section-title"><div><span class="step">02</span><h2 id="library-title">계산기에 적용 중인 모듈 <span id="module-count" class="count">0</span></h2></div><button id="refresh" class="text-button" type="button">목록 새로고침 ↻</button></div>
       <div class="filters"><label class="search-label" for="search">모듈 검색<input id="search" type="search" placeholder="제조사, 시리즈, 모델명으로 검색"></label><label for="manufacturer-filter">제조사<select id="manufacturer-filter"><option value="">전체 제조사</option></select></label></div>
       <div class="table-scroll"><table><thead><tr><th scope="col">제조사</th><th scope="col">시리즈 / 모델명</th><th scope="col">정격 출력</th><th scope="col">전압 Voc / Vmp</th><th scope="col">상태</th></tr></thead><tbody id="rows"></tbody></table></div>
       <p class="hint">동일한 제조사·모델명은 시리즈나 사양이 달라도 중복 등록이 차단됩니다.</p>

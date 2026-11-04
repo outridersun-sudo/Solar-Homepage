@@ -1,0 +1,20 @@
+v11에서 제거한 파일 (기존 프로젝트에 덮어쓰는 경우에도 이 파일들은 남지 않아야 합니다)
+
+server/module-pdf.js
+server/module-pdf-parser.js
+server/module-image-ocr.js
+scripts/setup-module-ocr.js
+test/module-image-ocr.test.js
+test/module-pdf-ocr-ui.cjs
+test/module-pdf-ocr.test.js
+test/module-review-ui.cjs
+test/module-review.test.js
+test/helpers/module-fixtures.cjs
+
+새 폴더에 전체 소스를 풀어 사용하는 방식을 권장합니다.
+.env와 uploads 또는 MODULE_DATA_DIR의 기존 데이터는 보존하세요.
+module-test-app.cjs는 기존 테스트 도우미에서 PDF 생성 기능을 제외한 새 파일입니다.
+
+경로 정정 (내용 변경 없음):
+public/scripts/verify-quote-smtp.js -> scripts/verify-quote-smtp.js
+package.json의 기존 verify:quote-mail 명령 및 상대 require 경로에 맞춰 이동했습니다.

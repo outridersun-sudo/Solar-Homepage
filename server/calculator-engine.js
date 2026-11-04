@@ -302,12 +302,12 @@ function selectStringPlans(input, designs) {
 }
 
 function moduleDesignValues(module, input) {
-  const substitute=module.rearSpecMode==='gain10';
+  const substitute=['gain10','bstc'].includes(module.rearSpecMode);
   const rearScale = substitute ? 1 : input.rearIrradiance / 13.5;
   const interpolate = (stc, bnpi) => stc + (bnpi - stc) * rearScale;
 
   const ref = {
-    voc: input.designMode === 'document' ? module.voc : interpolate(module.voc, module.bnpiVoc),
+    voc: substitute ? module.bnpiVoc : input.designMode === 'document' ? module.voc : interpolate(module.voc, module.bnpiVoc),
     vmp: interpolate(module.vmp, module.bnpiVmp),
     imp: interpolate(module.imp, module.bnpiImp),
     isc: interpolate(module.isc, module.bnpiIsc),

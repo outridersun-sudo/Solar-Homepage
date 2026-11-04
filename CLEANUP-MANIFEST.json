@@ -1,0 +1,50 @@
+{
+  "version": "v11",
+  "basis": "User-uploaded README.zip",
+  "input_zip_sha256": "93636e3030331ec5e427f1c4c0e5698a589230c4f0ad74e56bfe46f82b760365",
+  "removed_files": [
+    "scripts/setup-module-ocr.js",
+    "server/module-image-ocr.js",
+    "server/module-pdf-parser.js",
+    "server/module-pdf.js",
+    "test/helpers/module-fixtures.cjs",
+    "test/module-image-ocr.test.js",
+    "test/module-pdf-ocr-ui.cjs",
+    "test/module-pdf-ocr.test.js",
+    "test/module-review-ui.cjs",
+    "test/module-review.test.js"
+  ],
+  "moved_files": {
+    "public/scripts/verify-quote-smtp.js": "scripts/verify-quote-smtp.js"
+  },
+  "changed_files": [
+    "README.md",
+    "README.txt",
+    "docs/module-registration.md",
+    "docs/module-text-import.md",
+    "private/reg-module.html",
+    "public/css/reg-module.css",
+    "public/js/reg-module.js",
+    "server/module-catalog.js",
+    "server/modules.js",
+    "test/module-text-import-ui.cjs",
+    "test/module-text-import.test.js",
+    "package.json"
+  ],
+  "added_files": [
+    "CLEANUP-README.txt",
+    "REMOVED-FILES.txt",
+    "scripts/verify-quote-smtp.js",
+    "public/company.html",
+    "test/module-cleanup.test.js",
+    "test/helpers/module-test-app.cjs"
+  ],
+  "restored_files": [
+    {
+      "path": "public/company.html",
+      "source": "Existing outridersun-sudo/Solar-Homepage main checkout, unchanged HEAD file",
+      "sha256": "9b2bd56883901ad85192b07a2fac49de14fd13e346979ce26b855f0013993eb2"
+    }
+  ],
+  "preserved_uploaded_files": 74
+}

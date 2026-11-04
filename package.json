@@ -5,8 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "verify:quote-mail": "node scripts/verify-quote-smtp.js"
+    "test": "node --test --test-isolation=none test/calculator.test.js && node --test --test-isolation=none test/module-text-import.test.js && node --test --test-isolation=none test/module-cleanup.test.js",
+    "verify:quote-mail": "node scripts/verify-quote-smtp.js",
+    "test:ui": "node test/module-text-import-ui.cjs && node test/calculator-ui.cjs"
   },
   "repository": {
     "type": "git",
