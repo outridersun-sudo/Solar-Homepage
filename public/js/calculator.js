@@ -316,6 +316,8 @@ function invalidate() {
   calculationSequence++;
   pendingCalculation?.abort();
   resultState = null;
+  $('inverterExclusionSection').hidden=true;
+  $('inverterExclusionBody').replaceChildren();
 
   $('results').replaceChildren(
     element(
@@ -554,6 +556,57 @@ function selectChoice(id) {
 
   renderVerification();
   renderMppt();
+  renderInverterExclusions();
+}
+
+function renderInverterExclusions(){
+  const section=$('inverterExclusionSection'),body=$('inverterExclusionBody');
+  body.replaceChildren();
+  if(!resultState){section.hidden=true;return;}
+  section.hidden=false;
+  const input=resultState.input,plan=resultState.plans[activeCard];
+  const used=new Set((plan?.rows || []).map(row=>row.kw));
+  const fmt=(value,digits=3)=>Number(value).toLocaleString('ko-KR',{maximumFractionDigits:digits});
+  const relation=(value,limit,passed)=>fmt(value)+(passed?' ≤ ':' > ')+fmt(limit);
+  const excluded=INVERTERS.filter(inv=>!used.has(inv.kw));
+  setText('inverterExclusionContext',(plan?activeCard+'안 기준: '+planName(plan):'현재 조건에서 선정 가능한 구성안이 없습니다.')+' / '+input.module.name+' / AC '+input.voltage+'V / 셀온도 '+input.minTemperature+'~'+input.maxCellTemperature+'℃ / '+rearSummary(input)+' / Voc 여유 '+input.vocMargin+'% / 단락전류 계수 '+input.iscFactor);
+  if(!excluded.length){body.append(element('p','선택한 구성안에 모든 등록 인버터 용량이 포함되어 있습니다.'));return;}
+  for(const inv of excluded){
+    const design=resultState.designs[inv.kw],article=element('article');article.dataset.kw=inv.kw;
+    const voltageMismatch=inv.voltage!==input.voltage;
+    const classification=voltageMismatch?'AC 전압군 불일치로 후보 제외':!design.eligible?'전기 조건 미충족으로 후보 제외':plan?'전기 조건 충족 · 선택한 조합에서 미선정':'전기 조건 충족 · 현재 탐색에서 구성안 없음';
+    article.append(element('h3',inv.kw+'kW / '+inv.model+' — '+classification));
+    if(voltageMismatch){
+      article.append(element('p','선택 AC 전압 '+input.voltage+'V ≠ 제품 AC 전압 '+inv.voltage+'V. 현재 계산기는 서로 다른 AC 전압군을 혼합하지 않으므로 후보에서 제외합니다. 스트링 전류 초과로 제외된 경우와 다릅니다.'));body.append(article);continue;
+    }
+    if(!design.currentChecks || !design.voltageChecks){article.append(element('p','상세 진단 데이터가 없습니다. server/calculator-engine.js를 반영하고 서버를 재시작해 주세요.'));body.append(article);continue;}
+    const values=design.values,checks=design.voltageChecks;
+    article.append(element('p','전류 온도 보정: Isc 온도계수 '+fmt(input.module.alphaIsc,6)+'%/℃를 사용하며, Imp 전용 온도계수가 없어 Imp에도 Isc 계수를 적용합니다. '+(input.module.iscCoefficientUnconfirmed?'음수 Isc 계수는 현재 엔진의 절댓값 보수 보정 규칙을 사용합니다.':'설계 최저·최고 셀온도에서 전류가 가장 커지는 보정계수를 사용합니다.')));
+    article.append(element('p','전류 계산 근거: 25℃ 적용 Imp '+fmt(values.imp)+'A × 온도 보정계수 '+fmt(values.maximumFactor,6)+' = 스트링 동작전류 '+fmt(values.impDesign)+'A. 적용 Isc '+fmt(values.isc)+'A × 온도 보정계수 '+fmt(values.maximumFactor,6)+' × 단락전류 계수 '+fmt(input.iscFactor)+' = 스트링 검토 단락전류 '+fmt(values.iscDesign)+'A.'));
+    if(!design.currentChecks.some(row=>row.passed))article.append(element('p','제품이 허용하는 1~'+inv.portsPerMppt+'병렬에서 스트링 동작전류·MPPT 동작전류·MPPT 단락전류 조건을 동시에 만족하는 병렬 수가 없습니다.'));
+    else article.append(element('p','전류 조건을 모두 만족하는 MPPT당 병렬 수: '+design.currentChecks.filter(row=>row.passed).map(row=>row.parallel+'병렬').join(', ')+'. 일부 병렬 수가 한도를 초과해도 허용되는 병렬 수가 있으면 제품 전체를 전류 초과로 제외하지 않습니다.'));
+    const scroll=element('div',undefined,'exclusion-scroll'),table=element('table');table.setAttribute('aria-label',inv.kw+'kW 인버터 병렬 수별 전류 계산값과 한계값 비교');
+    const head=element('thead'),header=element('tr');for(const label of ['MPPT당 병렬 수','스트링 동작전류 / 한도','MPPT 동작전류 / 한도','MPPT 단락전류 / 한도','판정'])header.append(element('th',label));head.append(header);table.append(head);
+    const tbody=element('tbody');
+    for(const row of design.currentChecks){
+      const tr=element('tr');tr.dataset.parallel=row.parallel;
+      const reasons=[];if(!row.stringPassed)reasons.push('스트링 동작전류 초과');if(!row.mpptPassed)reasons.push('MPPT 동작전류 초과');if(!row.shortCircuitPassed)reasons.push('MPPT 단락전류 초과');
+      const special=row.parallel===1&&inv.singleStringA?' (단일 스트링 허용값)':'';
+      for(const text of [row.parallel+'병렬',relation(row.impDesign,row.stringLimit,row.stringPassed)+' A'+special,row.parallel+' × '+fmt(values.impDesign)+' = '+relation(row.mpptCurrent,row.mpptLimit,row.mpptPassed)+' A',row.parallel+' × '+fmt(values.iscDesign)+' = '+relation(row.mpptShortCircuit,row.mpptShortCircuitLimit,row.shortCircuitPassed)+' A',reasons.join(' · ') || '전류 조건 통과'])tr.append(element('td',text));
+      tbody.append(tr);
+    }
+    table.append(tbody);scroll.append(table);article.append(scroll);
+    article.append(element('p','직렬 수 검토: 최소 = ceil(max(MPPT 하한 '+inv.mppMin+'V, 기동 '+inv.startV+'V) ÷ 고온 Vmp '+fmt(values.vmpHot)+'V) = '+checks.minSeries+'장. DC 전압 기준 최대 = floor(min(인버터 '+inv.dcMax+'V, 모듈 '+input.module.maxV+'V) ÷ 저온 Voc(여유 포함) '+fmt(values.vocWithMargin)+'V) = '+checks.maximumDCSeries+'장. MPPT 상한 기준 최대 = floor('+inv.mppMax+'V ÷ 저온 Vmp '+fmt(values.vmpCold)+'V) = '+checks.maximumMPPTSeries+'장. 최종 허용 최대 '+checks.maxSeries+'장. '+(checks.passed?'최소 '+checks.minSeries+'장 ≤ 최대 '+checks.maxSeries+'장으로 직렬 범위가 겹칩니다.':'최소 '+checks.minSeries+'장 > 최대 '+checks.maxSeries+'장으로 직렬 범위가 겹치지 않아 후보에서 제외합니다.')));
+    if(design.eligible){
+      const otherPlans=['A','B','C'].filter(id=>resultState.plans[id]?.rows.some(row=>row.kw===inv.kw));
+      const unitAC=inv.kw===350?input.kva350*input.pf350:inv.kw;
+      const maximumAC=input.dcKW*input.ratio*(1+input.tolerance);
+      if(unitAC>maximumAC+1e-10)article.append(element('p','용량 조건 비교: 이 제품 1대의 AC '+fmt(unitAC)+'kW > 현재 조합의 허용 AC 상한 '+fmt(maximumAC)+'kW (STC DC '+fmt(input.dcKW)+' × 목표 AC/DC '+fmt(input.ratio)+' × (1 + 허용 편차 '+fmt(input.tolerance*100)+'%)). 1대만 넣어도 상한을 초과하고 다른 제품을 추가하면 AC가 더 커지므로 현재 용량 조건의 구성안에 포함될 수 없습니다.'));
+      if(input.moduleCount<design.minSeries)article.append(element('p','모듈 수량 비교: 전체 '+input.moduleCount+'장 < 이 제품의 최소 1스트링 '+design.minSeries+'장. 현재 총수량으로 최소 직렬 스트링 1개를 만들 수 없습니다.'));
+      article.append(element('p',(plan?'전기 조건은 통과했지만 '+activeCard+'안에는 포함되지 않았습니다.':'전기 조건은 통과했지만 현재 전체 모듈 배분·AC/DC 조건을 만족하는 구성안을 찾지 못했습니다.')+(plan?.reason?' 선택안 기준: '+plan.reason+'.':'')+' 목표 AC/DC '+fmt(input.ratio)+' / 허용 편차 '+fmt(input.tolerance*100)+'% / 모듈 '+input.moduleCount+'장 전량 배분 / STC DC '+fmt(input.dcKW)+'kWp 기준의 조합 결과입니다. '+(otherPlans.length?'다른 구성안 '+otherPlans.join(', ')+'에는 포함됩니다.':'A~C 결과에도 포함되지 않았으며, 이 사실만으로 전류 초과나 제품 접속 불가로 판단하지 않습니다.')));
+    }
+    body.append(article);
+  }
 }
 
 function renderVerification() {
@@ -1738,6 +1791,8 @@ async function runCalculation(scroll = true) {
         '현재 가정에서의 예비 제외이며 제조사 최종 접속 불가 판정은 아닙니다.'
       );
     }
+
+    renderInverterExclusions();
 
     const excluded = INVERTERS
       .filter(inv =>

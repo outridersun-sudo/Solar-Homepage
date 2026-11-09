@@ -1,0 +1,41 @@
+Solar Homepage v12 — 인버터 용량별 제외·미선정 사유 상세 표시
+
+기존 Solar-Homepage-git 프로젝트 폴더에 ZIP 내부 경로대로 파일을 덮어쓰세요.
+이번 버전은 삭제할 파일이 없으며 새 폴더를 만들 필요가 없습니다.
+.git, .env, uploads, 모듈 카탈로그와 다른 홈페이지 파일은 그대로 유지합니다.
+반드시 Node.js 서버를 재시작하고 계산기 화면을 새로고침하세요. Windows에서는 npm.cmd start 사용.
+
+화면 변경:
+계산기 가장 하단에 빨간색 #c00000, 글자 크기 12px로 표시합니다.
+선택한 A/B/C안에 포함되지 않은 등록 제품의 모델명과 용량을 나열합니다.
+- AC 전압군 불일치: 선택 전압과 제품 전압 비교
+- 전기 조건 제외: 스트링 Imp, MPPT Imp, MPPT Isc 및 직렬 범위 비교
+- 조건 충족 후 조합 미선정: 현재 선정 기준과 다른 구성안의 포함 여부 표시
+- 1대 AC가 전체 허용 AC 상한보다 크거나 최소 스트링보다 모듈 총수가 적으면 직접 수치 비교
+부분 병렬 실패만으로 제품 전체를 제외하지 않고 110/60kW의 단일 스트링 예외도 반영합니다.
+퓨즈 참고 선정 결과를 새로운 후보 제외 조건으로 추가하지 않습니다.
+입력 변경/실패 시 과거 진단을 숨기며 모든 구성안이 없더라도 현재 후보 진단을 표시합니다.
+
+예: TWMNF-66HD750, 후면 13.5%, 셀온도 -20~40℃에서
+150kW 스트링 동작전류 19.71 × 1.0207 = 20.117997A > 제품 한도 18A로 후보 제외.
+1/2/3병렬마다 MPPT 동작·단락전류를 한계값과 별도로 비교합니다.
+실제 표시 내용은 선택 모듈과 온도·양면·설계 조건에 따라 달라집니다.
+표시값은 반올림하고 판정은 기존 엔진의 반올림 전 계산값을 사용합니다.
+기존 선정·배분·AC/DC 및 온도·전류 보정 조건은 유지합니다.
+
+수정된 실행 소스 3개:
+server/calculator-engine.js
+public/js/calculator.js
+public/calculator.html
+
+검증:
+node --test --test-isolation=none test/inverter-exclusions.test.js
+node test/inverter-exclusions-ui.cjs
+npm test
+node test/calculator-ui.cjs
+브라우저 테스트는 Playwright/Chromium과 빈 3000 포트가 필요합니다.
+새 진단 4개 단위 테스트, 실제 브라우저의 하단 위치/빨간색/12px/선택안 전환/150kW 초과/모바일/빈 결과와
+기존 계산기·텍스트 등록·정리 회귀 검증을 통과했습니다.
+
+세부 안내: docs/inverter-exclusions.md
+무결성 체크섬: PATCH-SHA256SUMS-v12.txt

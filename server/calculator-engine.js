@@ -431,6 +431,7 @@ function preliminaryDesign(inverter, module, input) {
   );
 
   const options = [];
+  const currentChecks = [];
 
   for (
     let parallel = 1;
@@ -442,13 +443,12 @@ function preliminaryDesign(inverter, module, input) {
         ? inverter.singleStringA
         : inverter.stringA;
 
-    if (
-      values.impDesign > stringLimit + 1e-10 ||
-      parallel * values.impDesign > inverter.mpptA + 1e-10 ||
-      parallel * values.iscDesign > inverter.mpptIscA + 1e-10
-    ) {
-      continue;
-    }
+    const stringPassed=values.impDesign<=stringLimit+1e-10;
+    const mpptPassed=parallel*values.impDesign<=inverter.mpptA+1e-10;
+    const shortCircuitPassed=parallel*values.iscDesign<=inverter.mpptIscA+1e-10;
+    const passed=stringPassed&&mpptPassed&&shortCircuitPassed;
+    currentChecks.push({parallel,stringLimit,impDesign:values.impDesign,mpptCurrent:parallel*values.impDesign,mpptLimit:inverter.mpptA,mpptShortCircuit:parallel*values.iscDesign,mpptShortCircuitLimit:inverter.mpptIscA,stringPassed,mpptPassed,shortCircuitPassed,passed});
+    if(!passed)continue;
 
     for (let series = minSeries; series <= maxSeries; series++) {
       options.push({
@@ -481,6 +481,16 @@ function preliminaryDesign(inverter, module, input) {
     maxSeries,
     options,
     eligible: options.length > 0,
+    currentChecks,
+    voltageChecks:{
+      minSeries,maxSeries,
+      minimumOperatingVoltage:Math.max(inverter.mppMin,inverter.startV),
+      maximumDCVoltage:Math.min(inverter.dcMax,module.maxV),
+      maximumMPPTVoltage:inverter.mppMax,
+      maximumDCSeries:Math.floor(Math.min(inverter.dcMax,module.maxV)/values.vocWithMargin+1e-10),
+      maximumMPPTSeries:Math.floor(inverter.mppMax/values.vmpCold+1e-10),
+      passed:minSeries<=maxSeries
+    },
     reasons,
     pattern: null
   };
