@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">
+<title>리파워링 설계 | 천일테크윈</title>
+<link rel="stylesheet" href="css/repowering.css?v=20261110-2">
+<script src="js/repowering.js?v=20261110-k-variants-v1" defer></script>
+</head>
+<body>
+<header class="hero"><div class="shell hero-inner"><div><div class="breadcrumbs"><a href="calculator.html">태양광 설비 구성 계산기</a><span>/</span><span>REPOWERING</span></div><h1><span class="solar-icon" aria-hidden="true">▦</span> 리파워링 설계</h1><p>기존 발전소 정보를 직접 입력하고, 교체 가능한 인버터 구성을 비교합니다.</p></div><button class="top-action" id="quoteBtn" type="button" disabled>견적문의</button></div></header>
+<main class="shell">
+<nav class="steps" aria-label="진행 순서"><a href="#input-title"><b>1</b> 전체 입력</a><span aria-hidden="true">›</span><a href="#results-title"><b>2</b> 결과 비교</a></nav>
+<div class="workspace">
+<form id="repoweringForm" class="sidebar">
+<section class="panel" aria-labelledby="input-title"><div class="panel-head"><span class="section-icon" aria-hidden="true">▤</span><h2 id="input-title">1. 전체 입력</h2><span class="head-note">모듈 DB 조회 없이 직접 입력</span></div><div class="panel-content">
+<div class="input-columns"><div class="fields plant-fields">
+<label for="acKW">발전소 용량 (AC)</label><div class="input-unit"><input id="acKW" name="acKW" type="number" min="1" max="10000" step="any" value="120" required><span>kW</span></div>
+<label for="moduleCount">전체 모듈 수량</label><div class="input-unit"><input id="moduleCount" name="moduleCount" type="number" min="1" max="100000" step="1" value="480" required><span>장</span></div>
+<label for="series">기존 직렬 수량</label><div class="input-unit"><input id="series" name="series" type="number" min="1" max="100" step="1" value="20" required><span>장</span></div>
+</div><div class="fields module-fields">
+<label for="pmax">모듈 출력 Pmax</label><div class="input-unit"><input id="pmax" name="pmax" type="number" min="1" max="1500" step="any" value="250" required><span>W</span></div>
+<label for="voc">Voc</label><div class="input-unit"><input id="voc" name="voc" type="number" min="1" max="200" step="any" value="37.8" required><span>V</span></div>
+<label for="vmp">Vmp</label><div class="input-unit"><input id="vmp" name="vmp" type="number" min="1" max="200" step="any" value="30.6" required><span>V</span></div>
+<label for="imp">Imp</label><div class="input-unit"><input id="imp" name="imp" type="number" min="0.01" max="100" step="any" value="8.17" required><span>A</span></div>
+<label for="isc">Isc</label><div class="input-unit"><input id="isc" name="isc" type="number" min="0.01" max="100" step="any" value="8.80" required><span>A</span></div>
+<label for="maxSeriesFuse">Max Series Fuse</label><div class="input-unit"><input id="maxSeriesFuse" name="maxSeriesFuse" type="number" min="0.1" max="200" step="any" value="15" required><span>A</span></div>
+</div></div>
+<details class="module-voltage"><summary>모듈 최대 시스템전압</summary><div class="fields detail-fields"><label for="maxSystemV">최대 시스템전압</label><div class="input-unit"><input id="maxSystemV" name="maxSystemV" type="number" min="100" max="1500" step="any" value="1000" required><span>V</span></div></div><p class="note">기존 초기값 1,000V입니다. 모듈 자료를 확인해 적용하세요.</p></details>
+<p class="info" id="stringSummary">전체 병렬 스트링 수는 자동 계산합니다.</p><p class="note">기존 직렬과 전체 모듈을 유지합니다. 350kW 인버터는 리파워링 선정에서 제외합니다.</p>
+</div></section>
+<button id="runBtn" class="run-button" type="submit"><span aria-hidden="true">ϟ</span> 리파워링 인버터 자동 선정 <span aria-hidden="true">›</span></button>
+<p id="inputMessage" class="message" role="status" aria-live="polite"></p>
+</form>
+<div class="results-column" id="resultArea" aria-busy="false">
+<section class="panel diagram-panel" aria-labelledby="diagram-title"><div class="panel-head wrap"><span class="section-icon" aria-hidden="true">▦</span><h2 id="diagram-title">MPPT 스트링 구성도</h2><label class="selector" for="inverterSelect">인버터 선택 <select id="inverterSelect" disabled><option>계산 후 선택</option></select></label></div><div class="panel-content"><p id="diagramEmpty" class="empty">자동 선정을 실행하면 인버터별 전체 MPPT 구성이 표시됩니다.</p><div id="diagram" hidden><div class="inverter-banner" id="inverterTitle"></div><div class="mppt-grid" id="mpptGrid"></div><p class="info" id="diagramSummary"></p><div id="unitChecks" class="unit-checks"></div></div></div></section>
+<section class="panel" aria-labelledby="results-title"><div class="panel-head"><span class="section-icon" aria-hidden="true">▥</span><h2 id="results-title">2. 결과 비교 및 선정 사유</h2></div><div class="panel-content"><div class="metrics" id="metrics"></div><p class="note" id="selectionPolicy">전체 모듈과 기존 직렬을 유지합니다. 인버터 AC 합계는 모듈 DC 용량 이상, 기존 발전소 AC 용량 이하로 검토합니다.</p><p id="resultSummary" class="empty">입력 예시는 설계 적합성을 보장하지 않습니다. 실제 사양으로 계산해 확인하세요.</p><div class="candidate-grid" id="candidates"></div></div></section>
+<section class="panel" aria-labelledby="review-title"><div class="panel-head"><span class="section-icon" aria-hidden="true">☷</span><h2 id="review-title">모델별 선정·미선정 검토</h2></div><div class="panel-content"><div id="modelReviews" class="model-reviews"><p class="empty">각 모델의 전압·전류·스트링 수용량과 퓨즈 조건을 비교합니다.</p></div></div></section>
+<section class="panel verification" aria-labelledby="verification-title"><div class="panel-head"><h2 id="verification-title">자동 검증 결과</h2></div><div class="panel-content" id="verification"><p class="note">MPPT 합산전류와 개별 스트링 보호 퓨즈 정격은 별도로 검토합니다.</p></div></section>
+</div></div>
+<noscript><p>리파워링 계산을 사용하려면 JavaScript를 허용해 주세요.</p></noscript>
+</main><footer class="shell">천일테크윈 · 리파워링 예비 설계 검토</footer>
+</body></html>

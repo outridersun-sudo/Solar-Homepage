@@ -384,7 +384,6 @@ select.q-control{padding-right:28px;text-overflow:ellipsis}
 .q-check{display:inline-flex;gap:9px;align-items:center;font-size:14px;font-weight:600;cursor:pointer;color:#2c4660;line-height:1.6}
 .q-check input{width:18px;height:18px;flex:0 0 18px;accent-color:var(--q-teal);margin:0}
 .q-help{font-size:12px;line-height:1.7;color:#7b8da0;margin-top:5px}
-.q-calculator-spec{grid-column:1/-1;margin:0;padding:8px 10px;border-radius:5px;background:#eef6ff;color:#365d86;font-size:12px;line-height:1.7;overflow-wrap:anywhere;min-width:0}
 .q-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:9px 17px;border:1px solid #1595a9;border-radius:6px;background:#fff;color:#047b91;font-size:14px;font-weight:700;line-height:1.4;text-decoration:none;white-space:nowrap}
 .q-button:hover{background:#f0fafb}
 .q-button:disabled{opacity:.5;cursor:default}
@@ -489,7 +488,7 @@ body:has(.quote-page)>.footer{margin-top:0}
         <div class="q-fields q-delivery-fields">
           <label class="q-field" for="deliveryRegion"><span class="q-field-label">납품 지역</span><input class="q-control" id="deliveryRegion" name="deliveryRegion" type="text" maxlength="150" autocomplete="address-level2" placeholder="시·군·구 입력"></label>
           <label class="q-field" for="deliveryDate"><span class="q-field-label">희망 납기일</span><input class="q-control" id="deliveryDate" name="deliveryDate" type="date"></label>
-          <label class="q-field q-wide" for="requestMessage"><span class="q-field-label">추가 요청사항</span><textarea class="q-control" id="requestMessage" name="requestMessage" maxlength="8000" placeholder="설치 예정 용량, 희망 제품, 분할 납품 등 필요한 내용을 작성해 주세요."></textarea></label>
+          <label class="q-field q-wide" for="requestMessage"><span class="q-field-label">추가 요청사항</span><textarea class="q-control" id="requestMessage" name="requestMessage" maxlength="2000" placeholder="설치 예정 용량, 희망 제품, 분할 납품 등 필요한 내용을 작성해 주세요."></textarea></label>
         </div>
         <div class="q-attachment-line">
           <button class="q-button" type="button" id="chooseFiles" aria-describedby="attachmentHelp" disabled><svg class="q-attachment-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 12 7-7a4 4 0 0 1 6 6L10 22a6 6 0 0 1-8-8L14 2M7 16l9-9a1.5 1.5 0 0 1 2 2l-9 9a3 3 0 0 1-4-4l9-9"/></svg>파일 첨부</button>
@@ -500,7 +499,7 @@ body:has(.quote-page)>.footer{margin-top:0}
         <p class="q-message" id="attachmentMessage" role="status" aria-live="polite" hidden></p>
       </section>
       <section class="q-panel" aria-labelledby="contactTitle">
-        <div class="q-section-heading"><span class="q-step" aria-hidden="true">03</span><h2 id="contactTitle">연락처 정보</h2></div>
+        <div class="q-section-heading"><span class="q-step" aria-hidden="true">03</span><h2 id="contactTitle">담당자 정보</h2></div>
         <p class="q-help" id="contactMethodHelp"><span class="q-required">*</span> 연락처 또는 이메일 중 하나는 반드시 입력해 주세요.</p>
         <div class="q-fields">
           <label class="q-field" for="companyName"><span class="q-field-label">회사명</span><input class="q-control" id="companyName" name="companyName" maxlength="120" autocomplete="organization" placeholder="회사명 입력"></label>
@@ -567,7 +566,6 @@ body:has(.quote-page)>.footer{margin-top:0}
   let files = [];
   let submitting = false;
   let requestState = null;
-  let quoteSource = 'direct';
   const allRows = () => [...products.querySelectorAll('.q-product-row')];
   const visibleRows = () => allRows().filter(row => !row.hidden);
   const mode = () => form.querySelector('input[name="quoteMode"]:checked').value;
@@ -605,40 +603,6 @@ body:has(.quote-page)>.footer{margin-top:0}
     const entry = (catalog[kind][manufacturer] || []).find(item => item.name === field(row, 'model').value);
     field(row, 'power').value = entry ? String(entry.power) : '';
     updateRecommendation(row);
-    updateCalculatorSelection(row, entry);
-  }
-
-  function updateCalculatorSelection(row, entry) {
-    const selection = row.calculatorSelection;
-    const model = field(row, 'model');
-    let note = row.querySelector('.q-calculator-spec');
-    if (!selection || !entry || selection.model !== entry.name ||
-        field(row, 'kind').value !== 'inverter' ||
-        field(row, 'manufacturer').value !== selection.manufacturer) {
-      if (selection) {
-        row.calculatorSelection = null;
-        const items = catalog[field(row,'kind').value][field(row,'manufacturer').value] || [];
-        const unit = field(row,'kind').value === 'module' ? 'W' : 'kW';
-        for (const option of model.options) {
-          const item = items.find(item => item.name === option.value);
-          if (item) option.textContent = item.name + ' · ' + item.power + unit;
-        }
-      }
-      note?.remove();
-      return;
-    }
-    const suffix = selection.status === 'selected'
-      ? '선정 퓨즈 ' + selection.currentA + 'A'
-      : selection.status === 'unavailable' ? '퓨즈 선정 불가'
-      : selection.status === 'unused' ? '연결 모듈 없음' : '퓨즈 확인 필요';
-    model.selectedOptions[0].textContent = (selection.label || entry.name) + ' · ' + entry.power + 'kW · ' + suffix;
-    if (!note) {
-      note = textNode('p', '', 'q-calculator-spec');
-      row.append(note);
-    }
-    note.textContent = selection.status === 'selected'
-      ? '선정 표기: ' + selection.label + ' / 퓨즈 ' + selection.currentA + 'A · ' + selection.voltageV + 'V / 제품 기본 모델: ' + selection.model
-      : '제품 기본 모델: ' + selection.model + ' / ' + suffix;
   }
 
   function updateModels(row) {
@@ -737,18 +701,11 @@ body:has(.quote-page)>.footer{margin-top:0}
 
   function collectQuote() {
     return {
-      source: quoteSource,
       recommendation: recommend.checked,
       products: visibleRows().map(row => ({
         kind:field(row,'kind').value,
         manufacturer:field(row,'manufacturer').value,
         model:field(row,'model').value,
-        ...(row.calculatorSelection ? {
-          selectionStatus: row.calculatorSelection.status,
-          selectedModelLabel: row.calculatorSelection.label,
-          selectedFuseA: row.calculatorSelection.currentA,
-          selectedFuseV: row.calculatorSelection.voltageV
-        } : {}),
         power:field(row,'power').value === '' ? null : Number(field(row,'power').value),
         quantity:field(row,'quantity').value === '' ? null : Number(field(row,'quantity').value)
       })).filter(product => product.model || product.power !== null || product.quantity !== null || (product.kind === 'module' && product.manufacturer)),
@@ -870,75 +827,10 @@ body:has(.quote-page)>.footer{margin-top:0}
   const today = new Date();
   $('deliveryDate').min = [today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
   addRow('module');addRow('inverter');applyMode();
-  // 계산기에서 같은 탭으로 이동한 경우에만 1회 자동 입력합니다.
-  if (new URLSearchParams(location.search).get('from') === 'calculator') {
-    try {
-      const raw = sessionStorage.getItem('solar-calculator-quote-v1');
-      const draft = raw ? JSON.parse(raw) : null;
-      if (!draft || draft.version !== 1 || !Number.isFinite(draft.createdAt) ||
-          Date.now() - draft.createdAt > 1800000 || draft.createdAt > Date.now() + 60000 ||
-          !Array.isArray(draft.products) || !draft.products.length || draft.products.length > 30 ||
-          typeof draft.request !== 'string' || draft.request.length > 8000) {
-        throw new Error('계산기 연계 정보가 없거나 만료되었습니다. 계산기에서 다시 연결해 주세요.');
-      }
-      for (const product of draft.products) {
-        if (!product || !['module','inverter'].includes(product.kind) ||
-            typeof product.manufacturer !== 'string' || typeof product.model !== 'string' ||
-            product.model.length > 150 || !Number.isInteger(product.quantity) || product.quantity < 1 ||
-            product.quantity > 1000000 || !Number.isFinite(product.power) || product.power <= 0) {
-          throw new Error('계산기 품목 정보를 확인할 수 없습니다. 다시 계산해 주세요.');
-        }
-        if (product.selectionStatus !== undefined && product.kind === 'inverter') {
-          if (!['selected','unavailable','unconfirmed','unused'].includes(product.selectionStatus)) {
-            throw new Error('계산기 퓨즈 선정 정보를 확인할 수 없습니다. 다시 계산해 주세요.');
-          }
-          if (product.selectionStatus === 'selected' &&
-              (!Number.isFinite(product.selectedFuseA) || product.selectedFuseA <= 0 || product.selectedFuseA > 1000 ||
-               !Number.isFinite(product.selectedFuseV) || product.selectedFuseV <= 0 || product.selectedFuseV > 3000 ||
-               typeof product.selectedModelLabel !== 'string' || product.selectedModelLabel.length > 180 ||
-               product.selectedModelLabel !== product.model.replace(/-K\d+(?:A)?$/, '') + '-K' + product.selectedFuseA + 'A')) {
-            throw new Error('계산기 퓨즈 선정 표기를 확인할 수 없습니다. 다시 계산해 주세요.');
-          }
-        }
-      }
-      products.replaceChildren();
-      form.querySelector('input[name="quoteMode"][value="both"]').checked = true;
-      for (const product of draft.products) {
-        // 견적 목록에 없는 계산기 모델도 선택한 제품명·출력으로 전달합니다.
-        const brands = catalog[product.kind];
-        if (!Object.prototype.hasOwnProperty.call(brands, product.manufacturer)) brands[product.manufacturer] = [];
-        if (!brands[product.manufacturer].some(item => item.name === product.model)) {
-          brands[product.manufacturer].push({name:product.model,power:product.power});
-        }
-        const row = addRow(product.kind);
-        field(row,'manufacturer').value = product.manufacturer;
-        updateModels(row);
-        field(row,'model').value = product.model;
-        if (product.kind === 'inverter' && product.selectionStatus) {
-          row.calculatorSelection = {
-            model: product.model, manufacturer: product.manufacturer,
-            status: product.selectionStatus,
-            label: product.selectionStatus === 'selected' ? product.selectedModelLabel : null,
-            currentA: product.selectionStatus === 'selected' ? product.selectedFuseA : null,
-            voltageV: product.selectionStatus === 'selected' ? product.selectedFuseV : null
-          };
-        }
-        updatePower(row);
-        field(row,'quantity').value = String(product.quantity);
-      }
-      $('requestMessage').value = draft.request;
-      quoteSource = 'calculator';
-      applyMode();
-      message('productMessage','계산기에서 선택한 인버터·모듈과 퓨즈 정격을 입력했습니다. -K25A 등의 이름은 계산기 선정 표기이며 제품 기본 모델은 품목 하단에 함께 표시합니다.');
-      sessionStorage.removeItem('solar-calculator-quote-v1');
-      history.replaceState(null, '', location.pathname + location.hash);
-    } catch (error) {
-      message('productMessage',error.message || '계산기 연계 정보를 불러오지 못했습니다.',true);
-    }
-  }
   document.querySelector('.site-header .nav-quote')?.setAttribute('aria-current','page');
 })();
 
 </script>
+<script src="js/repowering-quote.js?v=20261110-2" defer></script>
 </body>
 </html>

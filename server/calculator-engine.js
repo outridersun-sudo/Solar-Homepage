@@ -1,7 +1,7 @@
 'use strict';
 // 서버 전용: public 폴더 안에 넣지 마세요.
 const {getCatalog} = require('./module-catalog');
-const INVERTERS = require('./calculator-data/inverters.json');
+const INVERTERS = require('./calculator-data/calculator-inverters.json');
 function capacityPlans(input) {
   const {
     dcKW, ratio, tolerance, voltage,
@@ -31,10 +31,10 @@ function capacityPlans(input) {
 
   const make = (acKW, counts) => {
     const rows = INVERTERS
-      .filter(inv => counts[inv.kw] > 0)
+      .filter(inv => counts[inv.model] > 0)
       .map(inv => ({
         ...inv,
-        count: counts[inv.kw],
+        count: counts[inv.model],
         unitAC: inv.kw === 350 ? kva350 * pf350 : inv.kw
       }));
 
@@ -53,8 +53,8 @@ function capacityPlans(input) {
     };
   };
 
-  const eligibleModels = input.eligibleKw
-    ? INVERTERS.filter(inv => input.eligibleKw.includes(inv.kw))
+  const eligibleModels = input.eligibleModels
+    ? INVERTERS.filter(inv => input.eligibleModels.includes(inv.model))
     : INVERTERS;
 
   const candidates = [];
@@ -88,7 +88,7 @@ function capacityPlans(input) {
       }
     }
 
-    reconstruct = item => make(item.acKW, {350: item.n});
+    reconstruct = item => make(item.acKW, {[INVERTERS.find(inv => inv.kw === 350).model]: item.n});
   } else {
     const coins = eligibleModels
       .filter(inv => inv.voltage === 380)
@@ -135,9 +135,9 @@ function capacityPlans(input) {
       const counts = {};
 
       while (u > 0) {
-        const kw = coins[parent[u]].kw;
-        counts[kw] = (counts[kw] || 0) + 1;
-        u -= kw / 2;
+        const inv = coins[parent[u]];
+        counts[inv.model] = (counts[inv.model] || 0) + 1;
+        u -= inv.kw / 2;
       }
 
       return make(item.acKW, counts);
@@ -195,14 +195,14 @@ function capacityPlans(input) {
 // Compare inverter compositions as well as their actual string allocations.
 function selectStringPlans(input, designs) {
   const seeds = capacityPlans(input);
-  const models = INVERTERS.filter(inv => inv.voltage === input.voltage && designs[inv.kw].eligible)
+  const models = INVERTERS.filter(inv => inv.voltage === input.voltage && designs[inv.model].eligible)
     .sort((a, b) => input.priority === 'asc' ? a.kw - b.kw : b.kw - a.kw);
   const upper = seeds.targetAC * (1 + input.tolerance);
   const lower = Math.max(input.dcKW + 1e-8, seeds.targetAC * (1 - input.tolerance));
   const pool = new Map();
   const make = counts => {
-    const rows = INVERTERS.filter(inv => counts[inv.kw]).map(inv => ({
-      ...inv, count: counts[inv.kw], unitAC: inv.kw === 350 ? input.kva350 * input.pf350 : inv.kw
+    const rows = INVERTERS.filter(inv => counts[inv.model]).map(inv => ({
+      ...inv, count: counts[inv.model], unitAC: inv.kw === 350 ? input.kva350 * input.pf350 : inv.kw
     }));
     const acKW = rows.reduce((sum, row) => sum + row.count * row.unitAC, 0);
     const actualRatio = acKW / input.dcKW;
@@ -213,14 +213,14 @@ function selectStringPlans(input, designs) {
   const add = (plan, retainIncomplete = false) => {
     if (plan && !retainIncomplete) {
       const capacity = plan.rows.reduce((sum, row) => {
-        const reachable = preparePattern(designs[row.kw]).reachable;
+        const reachable = preparePattern(designs[row.model]).reachable;
         const cap = Math.floor(row.unitAC * 1000 / input.module.p + 1e-10);
         const maximum = reachable.filter(n => n <= cap).at(-1) || 0;
         return sum + row.count * maximum;
       }, 0);
       if (capacity < input.moduleCount) return;
     }
-    if (plan) pool.set(plan.rows.map(row => row.kw + ':' + row.count).join(','), plan);
+    if (plan) pool.set(plan.rows.map(row => row.model + ':' + row.count).join(','), plan);
   };
   for (const id of ['A', 'B', 'C']) add(seeds[id], true);
   let visited = 0;
@@ -241,7 +241,7 @@ function selectStringPlans(input, designs) {
     if (ac + left * Math.max(...remainingPowers) < lower - 1e-9 ||
         ac + left * Math.min(...remainingPowers) > upper + 1e-9) return;
     for (let n = left; n >= 0; n--) {
-      enumerate(index + 1, left - n, ac + n * powers[index], {...counts, [models[index].kw]: n});
+      enumerate(index + 1, left - n, ac + n * powers[index], {...counts, [models[index].model]: n});
       if (truncated) return;
     }
   }
@@ -259,7 +259,7 @@ function selectStringPlans(input, designs) {
     for (const unit of allocation.units) for (const mppt of unit.mppts) {
       if (!mppt.parallel) continue;
       strings[mppt.series] = (strings[mppt.series] || 0) + mppt.parallel;
-      shortfall += mppt.parallel * (designs[unit.kw].maxSeries - mppt.series);
+      shortfall += mppt.parallel * (designs[unit.model].maxSeries - mppt.series);
     }
     const totalStrings = Object.values(strings).reduce((sum, n) => sum + n, 0);
     const utilization = allocation.units.map(unit => unit.stcKW / unit.unitAC);
@@ -400,10 +400,8 @@ function selectStringFuse(inverter, module, values) {
       : 'NO_CANDIDATE_IN_RANGE';
   return {
     ...base, candidates, selected,
-    // 사용자 요청 표시명. 실제 제조사 모델이나 제품 카탈로그 키는 변경하지 않는다.
-    selectionLabel: selected && typeof inverter.model === 'string'
-      ? inverter.model.replace(/-K\d+(?:A)?$/, '') + '-K' + selected.currentA + 'A'
-      : null,
+    // 제조사 모델명과 선택된 퓨즈 정격은 별도로 표시한다.
+    selectionLabel: selected ? ([36,60].includes(inverter.kw) ? inverter.model : inverter.model.replace(/-K\d+(?:A)?$/, '') + '-K' + selected.currentA + 'A') : null,
     status: selected ? 'selected' : 'unavailable', reason
   };
 }
@@ -473,14 +471,21 @@ function preliminaryDesign(inverter, module, input) {
     );
   }
 
+  const fuseReview = selectStringFuse(inverter, module, values);
+  const fuseRequired = inverter.kw === 36 || inverter.kw === 60;
+  if (fuseRequired && fuseReview.status !== 'selected') {
+    reasons.push('등록 퓨즈 ' + (inverter.stringFuseOptions || []).map(o => o.currentA + 'A').join('·') +
+      '가 1스트링 보정 Isc × 1.5~2.4 및 모듈 Max Series Fuse 조건을 충족하지 않음');
+  }
+
   return {
     inverter,
     values,
-    fuseReview: selectStringFuse(inverter, module, values),
+    fuseReview,
     minSeries,
     maxSeries,
     options,
-    eligible: options.length > 0,
+    eligible: options.length > 0 && (!fuseRequired || fuseReview.status === 'selected'),
     currentChecks,
     voltageChecks:{
       minSeries,maxSeries,
@@ -607,7 +612,7 @@ function allocatePlant(plan, designs, input, exactWorkLimit = 20000000) {
   const units = [];
 
   for (const row of plan.rows) {
-    const design = designs[row.kw];
+    const design = designs[row.model];
     preparePattern(design);
 
     for (let index = 0; index < row.count; index++) {
@@ -793,15 +798,15 @@ function normalizeInput(body) {
 function calculate(body) {
   const input = normalizeInput(body);
   const designs = {};
-  for (const inverter of INVERTERS) designs[inverter.kw] = preliminaryDesign(inverter, input.module, input);
-  input.eligibleKw = INVERTERS.filter(inv => designs[inv.kw].eligible).map(inv => inv.kw);
+  for (const inverter of INVERTERS) designs[inverter.model] = preliminaryDesign(inverter, input.module, input);
+  input.eligibleModels = INVERTERS.filter(inv => designs[inv.model].eligible).map(inv => inv.model);
   const {plans, allocations, selection} = selectStringPlans(input, designs);
   // DP 복원용 내부 배열은 클라이언트에 보내지 않습니다.
   const visibleDesigns = Object.fromEntries(Object.entries(designs).map(([key, d]) => {
     const {pattern, options, ...visible} = d;
     return [key, visible];
   }));
-  return {input, plans, designs:visibleDesigns, allocations, selection,
+  return {modelKeyVersion:1, input, plans, designs:visibleDesigns, allocations, selection,
     values:moduleDesignValues(input.module, input), calculatedAt:new Date().toISOString()};
 }
 module.exports = {calculate, normalizeInput, get catalog() {return getCatalog();}, INVERTERS, selectStringFuse};

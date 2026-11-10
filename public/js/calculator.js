@@ -371,7 +371,7 @@ const TITLES = {
 
 function planName(plan) {
   return plan.rows
-    .map(row => row.kw + 'kW × ' + row.count)
+    .map(row => row.kw + 'kW × ' + row.count + '대 (' + row.model + ')')
     .join(' + ');
 }
 
@@ -483,7 +483,7 @@ function renderComparison() {
     body.append(row);
   }
   const {input, values, designs, selection} = resultState;
-  const design = designs[input.voltage === 800 ? 350 : 150];
+  const design = Object.values(designs).find(d => d.inverter.kw === (input.voltage === 800 ? 350 : 150));
   const note = input.designMode === 'document'
     ? '자료 재현 비교: 저온 Voc는 STC 사양을 사용합니다. Vmpp·전류는 입력한 후면 일사율에 따라 계산합니다. 기본 예비 설계와 기준이 다릅니다.'
     : '기본 예비 설계: 후면 일사율을 반영한 Voc에 저온 보정과 추가 여유율을 적용합니다.';
@@ -536,7 +536,7 @@ function selectChoice(id) {
 
   select.replaceChildren(
     ...allocation.units.map((unit, index) => {
-      const review = resultState.designs[unit.kw].fuseReview;
+      const review = resultState.designs[unit.model].fuseReview;
       const op = element(
         'option',
         '#' + unit.index + ' · ' + unit.kw + 'kW · ' +
@@ -565,14 +565,14 @@ function renderInverterExclusions(){
   if(!resultState){section.hidden=true;return;}
   section.hidden=false;
   const input=resultState.input,plan=resultState.plans[activeCard];
-  const used=new Set((plan?.rows || []).map(row=>row.kw));
+  const used=new Set((plan?.rows || []).map(row=>row.model));
   const fmt=(value,digits=3)=>Number(value).toLocaleString('ko-KR',{maximumFractionDigits:digits});
   const relation=(value,limit,passed)=>fmt(value)+(passed?' ≤ ':' > ')+fmt(limit);
-  const excluded=INVERTERS.filter(inv=>!used.has(inv.kw));
+  const excluded=INVERTERS.filter(inv=>!used.has(inv.model));
   setText('inverterExclusionContext',(plan?activeCard+'안 기준: '+planName(plan):'현재 조건에서 선정 가능한 구성안이 없습니다.')+' / '+input.module.name+' / AC '+input.voltage+'V / 셀온도 '+input.minTemperature+'~'+input.maxCellTemperature+'℃ / '+rearSummary(input)+' / Voc 여유 '+input.vocMargin+'% / 단락전류 계수 '+input.iscFactor);
-  if(!excluded.length){body.append(element('p','선택한 구성안에 모든 등록 인버터 용량이 포함되어 있습니다.'));return;}
+  if(!excluded.length){body.append(element('p','선택한 구성안에 모든 등록 인버터 모델이 포함되어 있습니다.'));return;}
   for(const inv of excluded){
-    const design=resultState.designs[inv.kw],article=element('article');article.dataset.kw=inv.kw;
+    const design=resultState.designs[inv.model],article=element('article');article.dataset.kw=inv.kw;
     const voltageMismatch=inv.voltage!==input.voltage;
     const classification=voltageMismatch?'AC 전압군 불일치로 후보 제외':!design.eligible?'전기 조건 미충족으로 후보 제외':plan?'전기 조건 충족 · 선택한 조합에서 미선정':'전기 조건 충족 · 현재 탐색에서 구성안 없음';
     article.append(element('h3',inv.kw+'kW / '+inv.model+' — '+classification));
@@ -597,8 +597,13 @@ function renderInverterExclusions(){
     }
     table.append(tbody);scroll.append(table);article.append(scroll);
     article.append(element('p','직렬 수 검토: 최소 = ceil(max(MPPT 하한 '+inv.mppMin+'V, 기동 '+inv.startV+'V) ÷ 고온 Vmp '+fmt(values.vmpHot)+'V) = '+checks.minSeries+'장. DC 전압 기준 최대 = floor(min(인버터 '+inv.dcMax+'V, 모듈 '+input.module.maxV+'V) ÷ 저온 Voc(여유 포함) '+fmt(values.vocWithMargin)+'V) = '+checks.maximumDCSeries+'장. MPPT 상한 기준 최대 = floor('+inv.mppMax+'V ÷ 저온 Vmp '+fmt(values.vmpCold)+'V) = '+checks.maximumMPPTSeries+'장. 최종 허용 최대 '+checks.maxSeries+'장. '+(checks.passed?'최소 '+checks.minSeries+'장 ≤ 최대 '+checks.maxSeries+'장으로 직렬 범위가 겹칩니다.':'최소 '+checks.minSeries+'장 > 최대 '+checks.maxSeries+'장으로 직렬 범위가 겹치지 않아 후보에서 제외합니다.')));
+    const fuse=design.fuseReview;
+    if(fuse){
+      const upper=Math.min(fuse.maximumA,fuse.moduleLimitA);
+      article.append(element('p','퓨즈 참고 범위: 1스트링 보정 Isc '+fmt(fuse.isc)+'A × 1.5~2.4 = '+fmt(fuse.minimumA)+'~'+fmt(fuse.maximumA)+'A / 모듈 Max Series Fuse '+fmt(fuse.moduleLimitA)+'A / 적용 상한 '+fmt(upper)+'A. 등록 정격: '+(fuse.candidates||[]).map(o=>o.voltageV+'V / '+o.currentA+'A — '+(o.eligible?'범위 충족':'범위 미충족')).join(', ')+'.'));
+    }
     if(design.eligible){
-      const otherPlans=['A','B','C'].filter(id=>resultState.plans[id]?.rows.some(row=>row.kw===inv.kw));
+      const otherPlans=['A','B','C'].filter(id=>resultState.plans[id]?.rows.some(row=>row.model===inv.model));
       const unitAC=inv.kw===350?input.kva350*input.pf350:inv.kw;
       const maximumAC=input.dcKW*input.ratio*(1+input.tolerance);
       if(unitAC>maximumAC+1e-10)article.append(element('p','용량 조건 비교: 이 제품 1대의 AC '+fmt(unitAC)+'kW > 현재 조합의 허용 AC 상한 '+fmt(maximumAC)+'kW (STC DC '+fmt(input.dcKW)+' × 목표 AC/DC '+fmt(input.ratio)+' × (1 + 허용 편차 '+fmt(input.tolerance*100)+'%)). 1대만 넣어도 상한을 초과하고 다른 제품을 추가하면 AC가 더 커지므로 현재 용량 조건의 구성안에 포함될 수 없습니다.'));
@@ -645,13 +650,13 @@ function renderVerification() {
   const grouped = new Map();
 
   for (const unit of allocation.units) {
-    const inv = resultState.designs[unit.kw].inverter;
+    const inv = resultState.designs[unit.model].inverter;
 
     for (const mppt of unit.mppts) {
       if (!mppt.modules) continue;
 
       const key = [
-        unit.kw,
+        unit.model,
         mppt.series,
         mppt.parallel
       ].join('/');
@@ -1646,7 +1651,7 @@ function renderMppt() {
 
   const index = Number($('inverterPreview').value) || 0;
   const unit = allocation.units[index];
-  const design = resultState.designs[unit.kw];
+  const design = resultState.designs[unit.model];
   const grid = $('mpptGrid');
 
   grid.replaceChildren();
@@ -1753,7 +1758,7 @@ async function runCalculation(scroll = true) {
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || '서버 계산에 실패했습니다.');
     if (sequence !== calculationSequence || inputSignature !== signature()) return;
-    if (!data.selection?.requiresFullAllocation || !data.allocations || data.input?.designMode !== input.designMode) {
+    if (data.modelKeyVersion !== 1 || !data.selection?.requiresFullAllocation || !data.allocations || data.input?.designMode !== input.designMode) {
       throw new Error('계산 서버가 이전 버전입니다. server/calculator-engine.js를 반영하고 Node.js 서버를 재시작해 주세요.');
     }
     const {plans, designs} = data;
@@ -1797,10 +1802,10 @@ async function runCalculation(scroll = true) {
     const excluded = INVERTERS
       .filter(inv =>
         inv.voltage === input.voltage &&
-        !designs[inv.kw].eligible
+        !designs[inv.model].eligible
       )
       .map(inv =>
-        inv.kw + 'kW: ' + designs[inv.kw].reasons.join(', ')
+        inv.kw + 'kW · ' + inv.model + ': ' + designs[inv.model].reasons.join(', ')
       );
 
     setText(
@@ -1876,8 +1881,8 @@ function linkQuote() {
       {kind:'module', manufacturer:input.manufacturer, model:input.module.name,
        power:input.module.p, quantity:input.moduleCount},
       ...plan.rows.map(row => {
-        const review = resultState.designs[row.kw].fuseReview;
-        const used = allocation.units.some(unit => unit.kw === row.kw && unit.modules > 0);
+        const review = resultState.designs[row.model].fuseReview;
+        const used = allocation.units.some(unit => unit.model === row.model && unit.modules > 0);
         return {
           kind:'inverter', manufacturer:'Solis', model:row.model,
           power:row.kw, quantity:row.count,
@@ -1899,8 +1904,8 @@ function linkQuote() {
       '설계 최저온도: ' + input.minTemperature + '℃ / 최고 셀온도: ' + input.maxCellTemperature + '℃',
       rearSummary(input) + ' / 방위각: ' + input.azimuth + '° / 경사: ' + input.tilt + '°',
       ...plan.rows.map(row => {
-        const review = resultState.designs[row.kw].fuseReview;
-        const used = allocation.units.some(unit => unit.kw === row.kw && unit.modules > 0);
+        const review = resultState.designs[row.model].fuseReview;
+        const used = allocation.units.some(unit => unit.model === row.model && unit.modules > 0);
         if (!used) return '스트링 퓨즈 참고 선정 [' + row.model + ']: 연결 모듈 없음';
         return '스트링 과전류 보호장치 정격 선정 조건 [' + (review?.selectionLabel || row.model) + ']: ' +
           (review?.selectionLabel ? '제품 기본 모델 ' + row.model + ' / ' : '') +
@@ -2296,12 +2301,12 @@ function validateProductData(modules, inverters) {
     }
   }
   if (!Array.isArray(inverters) || !inverters.length) throw new Error('inverters.json의 인버터 목록이 비어 있습니다.');
-  const capacities = new Set();
+  const inverterModels = new Set();
   const inverterPositive = ['kw','voltage','mppt','strings','portsPerMppt','stringA','mpptA','mpptIscA','dcMax','mppMin','mppMax','startV'];
   for (const inv of inverters) {
     if (!inv || typeof inv.model !== 'string' || !inv.model ||
         inverterPositive.some(key => !Number.isFinite(inv[key]) || inv[key] <= 0) ||
-        ![36,60,110,150,350].includes(inv.kw) || capacities.has(inv.kw) ||
+        ![36,60,110,150,350].includes(inv.kw) || inverterModels.has(inv.model) ||
         inv.voltage !== (inv.kw === 350 ? 800 : 380) ||
         ![inv.mppt,inv.strings,inv.portsPerMppt].every(Number.isInteger) ||
         inv.mppt * inv.portsPerMppt !== inv.strings || inv.mppMin > inv.mppMax ||
@@ -2309,7 +2314,7 @@ function validateProductData(modules, inverters) {
         (inv.singleStringA !== undefined && (!Number.isFinite(inv.singleStringA) || inv.singleStringA <= 0))) {
       throw new Error('inverters.json의 용량·전압·MPPT·전류 사양을 확인하세요.');
     }
-    capacities.add(inv.kw);
+    inverterModels.add(inv.model);
   }
 }
 

@@ -3,6 +3,7 @@ const {Worker} = require('node:worker_threads');
 const {normalizeInput, INVERTERS} = require('./calculator-engine');
 const {getCatalog} = require('./module-catalog');
 module.exports = app => {
+  require('./repowering')(app);
   let active = 0;
   const clients = new Map();
   const cleanup = setInterval(() => {
