@@ -380,6 +380,33 @@ main>.verify{width:100%;margin-top:12px;min-height:0}
 #inverterExclusionSection table{width:100%;border-collapse:collapse;min-width:640px}
 #inverterExclusionSection th,#inverterExclusionSection td{padding:6px 8px;text-align:left;border-bottom:1px solid #f3dada;white-space:normal}
 #inverterExclusionSection .exclusion-scroll{overflow:auto}
+#mpptSection, #rearIrradiance { scroll-margin-block: 1rem; }
+#rearIrradianceNotice {
+  margin: 0 0 1rem;
+  color: #000;
+  font-size: calc(clamp(1rem, 1.8vw, 1.25rem) - 4px);
+  line-height: 1.5;
+}
+#rearIrradianceNotice strong {
+  color: #075bc7;
+  font-size: calc(clamp(1.125rem, 2vw, 1.375rem) - 4px);
+  font-weight: 700;
+}
+#rearIrradianceJump {
+  margin: 0 0 1rem;
+  min-height: 44px;
+  padding: .75rem 1rem;
+  border: 0;
+  border-radius: .5rem;
+  background: #ff9800;
+  color: #1a1a1a;
+  font: inherit;
+  font-weight: 700;
+  box-shadow: 0 3px 12px #0003;
+  cursor: pointer;
+}
+#rearIrradianceJump:focus-visible { outline: 3px solid #075bc7; outline-offset: 3px; }
+@media print { #rearIrradianceJump { display: none; } }
 </style>
 </head>
 <body>
@@ -714,6 +741,10 @@ main>.verify{width:100%;margin-top:12px;min-height:0}
    <div class="mppt-legend">예비 연결 개념도 · 실제 포트·퓨즈 배치 미확인</div>
   </div>
 
+  <p id="rearIrradianceNotice" hidden><strong>후면 일사율(%)</strong>이 현장 조건과 맞는지 확인하세요. 필요하면 값을 변경하여 <strong>'자동 계산 실행'</strong>을 눌러 다시 확인하세요.</p>
+
+  <button type="button" id="rearIrradianceJump" hidden>후면 일사율 변경</button>
+
   <label class="preview-selector" for="inverterPreview">
    연결도를 볼 인버터
    <select class="form-control" id="inverterPreview" disabled></select>
@@ -748,6 +779,6 @@ main>.verify{width:100%;margin-top:12px;min-height:0}
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script src="js/calculator.js?v=20261110-k-variants-v1" defer></script>
+<script src="js/calculator.js?v=20261118-rear-irradiance-v2" defer></script>
 </body>
 </html>

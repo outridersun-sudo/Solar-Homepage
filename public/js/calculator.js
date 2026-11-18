@@ -312,10 +312,19 @@ function signature() {
   );
 }
 
+function scrollToCalculatorField(id, block) {
+  $(id).scrollIntoView({
+    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+    block
+  });
+}
+
 function invalidate() {
   calculationSequence++;
   pendingCalculation?.abort();
   resultState = null;
+  $('rearIrradianceNotice').hidden = true;
+  $('rearIrradianceJump').hidden = true;
   $('inverterExclusionSection').hidden=true;
   $('inverterExclusionBody').replaceChildren();
 
@@ -1737,7 +1746,7 @@ function renderMppt() {
   );
 }
 
-async function runCalculation(scroll = true) {
+async function runCalculation(userInitiated = true) {
   const sequence = ++calculationSequence;
   pendingCalculation?.abort();
   const controller = new AbortController();
@@ -1768,6 +1777,10 @@ async function runCalculation(scroll = true) {
     renderAssumptions();
 
     const chosen = [currentChoice, 'A', 'B', 'C'].find(id => plans[id]);
+
+    const isBnpiWithoutPlan = !chosen && !fixedRear(input.module);
+    $('rearIrradianceNotice').hidden = !isBnpiWithoutPlan;
+    $('rearIrradianceJump').hidden = !userInitiated || !isBnpiWithoutPlan;
 
     if (plans[chosen]) {
       selectChoice(chosen);
@@ -1834,11 +1847,8 @@ async function runCalculation(scroll = true) {
       '모든 선정안은 미배분 0장이며, 조건을 충족하는 후보가 없으면 구성안을 표시하지 않습니다.'
     );
 
-    if (scroll) {
-      $('resultSection').scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
-      });
+    if (userInitiated) {
+      scrollToCalculatorField(chosen ? 'resultSection' : 'mpptSection', 'start');
     }
   } catch (error) {
     if (sequence !== calculationSequence) return;
@@ -2212,6 +2222,12 @@ function init() {
     'click',
     () => runCalculation()
   );
+
+  $('rearIrradianceJump').addEventListener('click', () => {
+    $('rearIrradiance').focus({preventScroll: true});
+    scrollToCalculatorField('rearIrradiance', 'center');
+    $('rearIrradianceJump').hidden = true;
+  });
 
   $('printBtn').addEventListener('click', () => {
     if (freshResult()) window.print();
