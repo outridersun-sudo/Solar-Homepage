@@ -293,7 +293,14 @@ function selectStringPlans(input, designs) {
   const plans = {targetAC:seeds.targetAC};
   const allocations = {};
   for (const [id,plan] of Object.entries({A,B,C})) {
-    plans[id] = plan ? {...plan, reason: reasons[id] + (searchComplete ? '' :
+    plans[id] = plan ? {...plan, rows:plan.rows.map(row => {
+      const selectionBasis = designs[row.model].selectionBasis;
+      if (!selectionBasis) return row;
+      const usedParallels = new Set(cache.get(plan).units.filter(unit => unit.model === row.model)
+        .flatMap(unit => unit.mppts.filter(mppt => mppt.modules > 0).map(mppt => mppt.parallel)));
+      const parallels = selectionBasis.parallels.filter(parallel => usedParallels.has(parallel));
+      return parallels.length ? {...row, selectionBasis:{...selectionBasis, parallels}} : row;
+    }), reason: reasons[id] + (searchComplete ? '' :
       ' 제한된 후보/재배분 탐색 결과이며 전체 조합의 최적해를 보장하지 않습니다.')} : null;
     if (plan) allocations[id] = cache.get(plan);
   }
@@ -407,6 +414,19 @@ function selectStringFuse(inverter, module, values) {
 }
 
 
+// The internal selection rule applies only to the factory 35A fuse variant.
+function fuse35Selection(inverter, module) {
+  if (inverter.model !== 'S6-GC150K-K30' || inverter.kw !== 150 ||
+      (module.rearSpecMode && module.rearSpecMode !== 'bnpi') ||
+      typeof module.source !== 'string' || !module.source.trim() ||
+      !Number.isFinite(module.bnpiIsc) || module.bnpiIsc <= 0 || module.bnpiIsc > 21 ||
+      !Number.isFinite(module.maxSeriesFuse) || module.maxSeriesFuse < 35) return null;
+
+  const fuse = inverter.stringFuseOptions?.find(option => option.currentA === 35);
+  return fuse ? {fuseA:35, fuseV:fuse.voltageV, parallels:[],
+    bnpiIsc:module.bnpiIsc, bnpiIscLimit:21} : null;
+}
+
 function preliminaryDesign(inverter, module, input) {
   const values = moduleDesignValues(module, input);
 
@@ -430,6 +450,8 @@ function preliminaryDesign(inverter, module, input) {
 
   const options = [];
   const currentChecks = [];
+  const fuse35 = minSeries <= maxSeries ? fuse35Selection(inverter, module) : null;
+  let selectionBasis;
 
   for (
     let parallel = 1;
@@ -446,7 +468,12 @@ function preliminaryDesign(inverter, module, input) {
     const shortCircuitPassed=parallel*values.iscDesign<=inverter.mpptIscA+1e-10;
     const passed=stringPassed&&mpptPassed&&shortCircuitPassed;
     currentChecks.push({parallel,stringLimit,impDesign:values.impDesign,mpptCurrent:parallel*values.impDesign,mpptLimit:inverter.mpptA,mpptShortCircuit:parallel*values.iscDesign,mpptShortCircuitLimit:inverter.mpptIscA,stringPassed,mpptPassed,shortCircuitPassed,passed});
-    if(!passed)continue;
+    if (!passed) {
+      if (!fuse35 || (parallel !== 1 && parallel !== 2) || stringPassed ||
+          !mpptPassed || !shortCircuitPassed) continue;
+      fuse35.parallels.push(parallel);
+      selectionBasis = fuse35;
+    }
 
     for (let series = minSeries; series <= maxSeries; series++) {
       options.push({
@@ -487,6 +514,7 @@ function preliminaryDesign(inverter, module, input) {
     options,
     eligible: options.length > 0 && (!fuseRequired || fuseReview.status === 'selected'),
     currentChecks,
+    ...(selectionBasis && {selectionBasis}),
     voltageChecks:{
       minSeries,maxSeries,
       minimumOperatingVoltage:Math.max(inverter.mppMin,inverter.startV),

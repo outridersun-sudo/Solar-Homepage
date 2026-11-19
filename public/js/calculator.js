@@ -378,9 +378,16 @@ const TITLES = {
   C: 'C안 용량·대수·스트링 균형'
 };
 
+function fuse35BasisText(basis) {
+  return '선정 근거: 원본 BNPI Isc ' + (Number(basis.bnpiIsc.toFixed(2)) === basis.bnpiIsc ? basis.bnpiIsc.toFixed(2) : basis.bnpiIsc) +
+    'A ≤ ' + basis.bnpiIscLimit + 'A (' + basis.fuseA + 'A × 0.75 × 0.8), MPPT당 ' +
+    basis.parallels.join('·') + '스트링 기준. 계산기 내부 기준으로 스트링 Imp 18A 검사 예외 적용.';
+}
+
 function planName(plan) {
   return plan.rows
-    .map(row => row.kw + 'kW × ' + row.count + '대 (' + row.model + ')')
+    .map(row => row.kw + 'kW × ' + row.count + '대 (' + row.model +
+      (row.selectionBasis ? ' · ' + row.selectionBasis.fuseA + 'A 퓨즈 장착형' : '') + ')')
     .join(' + ');
 }
 
@@ -467,6 +474,9 @@ function renderResults() {
       }
 
       button.append(stats, element('p', plan.reason, 'result-note'));
+      for (const row of plan.rows) {
+        if (row.selectionBasis) button.append(element('p', fuse35BasisText(row.selectionBasis), 'result-note'));
+      }
       button.addEventListener('click', () => selectChoice(id));
     }
 
@@ -592,7 +602,8 @@ function renderInverterExclusions(){
     const values=design.values,checks=design.voltageChecks;
     article.append(element('p','전류 온도 보정: Isc 온도계수 '+fmt(input.module.alphaIsc,6)+'%/℃를 사용하며, Imp 전용 온도계수가 없어 Imp에도 Isc 계수를 적용합니다. '+(input.module.iscCoefficientUnconfirmed?'음수 Isc 계수는 현재 엔진의 절댓값 보수 보정 규칙을 사용합니다.':'설계 최저·최고 셀온도에서 전류가 가장 커지는 보정계수를 사용합니다.')));
     article.append(element('p','전류 계산 근거: 25℃ 적용 Imp '+fmt(values.imp)+'A × 온도 보정계수 '+fmt(values.maximumFactor,6)+' = 스트링 동작전류 '+fmt(values.impDesign)+'A. 적용 Isc '+fmt(values.isc)+'A × 온도 보정계수 '+fmt(values.maximumFactor,6)+' × 단락전류 계수 '+fmt(input.iscFactor)+' = 스트링 검토 단락전류 '+fmt(values.iscDesign)+'A.'));
-    if(!design.currentChecks.some(row=>row.passed))article.append(element('p','제품이 허용하는 1~'+inv.portsPerMppt+'병렬에서 스트링 동작전류·MPPT 동작전류·MPPT 단락전류 조건을 동시에 만족하는 병렬 수가 없습니다.'));
+    if (design.selectionBasis) article.append(element('p', fuse35BasisText(design.selectionBasis)));
+    else if(!design.currentChecks.some(row=>row.passed))article.append(element('p','제품이 허용하는 1~'+inv.portsPerMppt+'병렬에서 스트링 동작전류·MPPT 동작전류·MPPT 단락전류 조건을 동시에 만족하는 병렬 수가 없습니다.'));
     else article.append(element('p','전류 조건을 모두 만족하는 MPPT당 병렬 수: '+design.currentChecks.filter(row=>row.passed).map(row=>row.parallel+'병렬').join(', ')+'. 일부 병렬 수가 한도를 초과해도 허용되는 병렬 수가 있으면 제품 전체를 전류 초과로 제외하지 않습니다.'));
     const scroll=element('div',undefined,'exclusion-scroll'),table=element('table');table.setAttribute('aria-label',inv.kw+'kW 인버터 병렬 수별 전류 계산값과 한계값 비교');
     const head=element('thead'),header=element('tr');for(const label of ['MPPT당 병렬 수','스트링 동작전류 / 한도','MPPT 동작전류 / 한도','MPPT 단락전류 / 한도','판정'])header.append(element('th',label));head.append(header);table.append(head);
@@ -659,7 +670,7 @@ function renderVerification() {
   const grouped = new Map();
 
   for (const unit of allocation.units) {
-    const inv = resultState.designs[unit.model].inverter;
+    const {inverter:inv, selectionBasis} = resultState.designs[unit.model];
 
     for (const mppt of unit.mppts) {
       if (!mppt.modules) continue;
@@ -673,6 +684,7 @@ function renderVerification() {
       if (!grouped.has(key)) {
         grouped.set(key, {
           inv,
+          selectionBasis,
           series: mppt.series,
           parallel: mppt.parallel,
           count: 0
@@ -1109,6 +1121,10 @@ function renderVerification() {
         : group.inv.stringA;
 
     const pass = values.impDesign <= limit + 1e-10;
+    if (group.selectionBasis?.parallels.includes(group.parallel)) {
+      return lines(groupName(group), '기존 비교: ' + fixed(values.impDesign) + ' > ' + fixed(limit) + 'A',
+        fuse35BasisText({...group.selectionBasis, parallels:[group.parallel]}));
+    }
 
     return lines(
       groupName(group),
@@ -1130,7 +1146,7 @@ function renderVerification() {
         ? group.inv.singleStringA
         : group.inv.stringA;
 
-    return values.impDesign <= limit + 1e-10;
+    return group.selectionBasis?.parallels.includes(group.parallel) || values.impDesign <= limit + 1e-10;
   });
 
   add(
@@ -1592,6 +1608,8 @@ function renderVerification() {
 
 function inverterSelectionLabel(unit, review) {
   if (!unit.modules) return unit.model + ' · 미사용';
+  const basis = resultState.designs[unit.model].selectionBasis;
+  if (basis) return unit.model + ' · ' + basis.fuseA + 'A 퓨즈 장착형';
   if (review?.selected && review.selectionLabel) return review.selectionLabel + ' · 선정 퓨즈 ' + review.selected.currentA + 'A';
   return unit.model + (review?.status === 'unavailable' ? ' · 퓨즈 선정 불가' : ' · 퓨즈 확인 필요');
 }
@@ -1603,10 +1621,14 @@ function renderFuseReview(design, unit) {
   body.replaceChildren();
   const review = design.fuseReview;
   const used = unit.modules > 0;
+  const selectionBasis = design.selectionBasis;
+  const parallels = selectionBasis?.parallels.filter(parallel =>
+    unit.mppts.some(mppt => mppt.modules > 0 && mppt.parallel === parallel));
+  const basis = parallels?.length ? {...selectionBasis, parallels} : null;
   const state = !used ? 'unused' : review?.status || 'unconfirmed';
   panel.dataset.state = state;
   setText('fuseReviewContext', '#' + unit.index + ' · 제품 기본 모델 ' + unit.model +
-    (used && review?.selectionLabel ? ' / 선정 표기 ' + review.selectionLabel : '') + ' · 1개 스트링 기준');
+    (basis ? ' / 35A 퓨즈 장착형' : used && review?.selectionLabel ? ' / 선정 표기 ' + review.selectionLabel : '') + ' · 1개 스트링 기준');
 
   const amps = value => Number.isFinite(value) ? value.toFixed(3) + ' A' : '미확인';
   const rating = option => option.voltageV.toLocaleString('ko-KR') + ' V / ' + asNumber(option.currentA) + ' A';
@@ -1624,11 +1646,13 @@ function renderFuseReview(design, unit) {
       amps(review.minimumA) + '~' + amps(review.maximumA) + ' — 참고 검토'
     : '서버의 퓨즈 선정 자료가 없습니다. 수정된 서버 파일을 적용하고 재시작하세요.');
   add('적용 퓨즈 정격', !used ? '미사용 인버터 — 적용 대상 없음'
+    : basis ? rating({voltageV:basis.fuseV, currentA:basis.fuseA}) + ' · 35A 퓨즈 장착형'
     : review?.selected ? rating(review.selected) + ' · 조건을 만족하는 최소 정격 자동 선정'
     : state === 'unconfirmed' ? '제품 자료 확인 필요' : '선정 불가 — 조건을 만족하는 제품 정격 없음');
   add('모듈 허용 최대 정격', amps(review?.moduleLimitA) + ' · 모듈 최대 직렬 퓨즈 정격');
 
   const reason = !used ? '미사용 인버터로 퓨즈 적용 판단 대상이 아닙니다.'
+    : basis ? fuse35BasisText(basis)
     : state === 'selected' ? '선정 범위 포함 / 모듈 허용 정격 이하'
     : state === 'unconfirmed' ? '등록된 퓨즈 정격 또는 서버 계산 결과를 확인하세요.'
     : review.reason === 'MODULE_LIMIT_BELOW_RANGE' ? '선정 하한이 모듈 허용 최대 정격을 초과합니다.'
@@ -1896,10 +1920,10 @@ function linkQuote() {
         return {
           kind:'inverter', manufacturer:'Solis', model:row.model,
           power:row.kw, quantity:row.count,
-          selectionStatus: used ? review?.status || 'unconfirmed' : 'unused',
-          selectedModelLabel: used && review?.selected ? review.selectionLabel : null,
-          selectedFuseA: used && review?.selected ? review.selected.currentA : null,
-          selectedFuseV: used && review?.selected ? review.selected.voltageV : null
+          selectionStatus: used ? (row.selectionBasis ? 'selected' : review?.status || 'unconfirmed') : 'unused',
+          selectedModelLabel: used ? (row.selectionBasis ? row.model + ' · 35A 퓨즈 장착형' : review?.selectionLabel) || null : null,
+          selectedFuseA: used ? row.selectionBasis?.fuseA ?? review?.selected?.currentA ?? null : null,
+          selectedFuseV: used ? row.selectionBasis?.fuseV ?? review?.selected?.voltageV ?? null : null
         };
       })
     ],
@@ -1917,6 +1941,7 @@ function linkQuote() {
         const review = resultState.designs[row.model].fuseReview;
         const used = allocation.units.some(unit => unit.model === row.model && unit.modules > 0);
         if (!used) return '스트링 퓨즈 참고 선정 [' + row.model + ']: 연결 모듈 없음';
+        if (row.selectionBasis) return row.model + ' · 35A 퓨즈 장착형 / ' + fuse35BasisText(row.selectionBasis);
         return '스트링 과전류 보호장치 정격 선정 조건 [' + (review?.selectionLabel || row.model) + ']: ' +
           (review?.selectionLabel ? '제품 기본 모델 ' + row.model + ' / ' : '') +
           (review ? '양면·온도 보정 Isc ' + review.isc.toFixed(3) + 'A × 1.5~2.4 / ' : '') +
